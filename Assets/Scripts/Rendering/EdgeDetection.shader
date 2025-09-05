@@ -6,6 +6,7 @@ Shader "Hidden/Edge Detection"
         _OutlineColor ("Fırça Rengi", Color) = (0,0,0,1)
         _DepthThreshold ("Derinlik Hassasiyeti", Float) = 0.01
         _NormalsThreshold ("Normal Hassasiyeti", Range(0, 1)) = 0.4
+        _AntiAliasingAmount ("Kenar Yumuşatma Miktarı", Range(0, 1)) = 0.5
         _BrushTex ("Fırça Dokusu", 2D) = "white" {}
         _BrushTiling ("Fırça Deseni Boyutu", Float) = 1.0
     }
@@ -40,8 +41,8 @@ Shader "Hidden/Edge Detection"
             float4 _OutlineColor;
             float _DepthThreshold;
             float _NormalsThreshold;
+            float _AntiAliasingAmount;
             
-            // URP uyumlu doku ve örnekleyici tanımı
             TEXTURE2D(_BrushTex);
             SAMPLER(sampler_BrushTex);
 
@@ -58,15 +59,12 @@ Shader "Hidden/Edge Detection"
                 float2 uv_left = uv + float2(-texel_size.x * _OutlineThickness, 0);
                 float2 uv_right = uv + float2(texel_size.x * _OutlineThickness, 0);
 
-                // --- YENİ: View-Space Derinlik Hesaplaması ---
-                // Linear01Depth yerine ham derinlik verisini kullanarak daha hassas bir hesaplama yapıyoruz.
+                // --- View-Space Derinlik Hesaplaması ---
                 float raw_depth_up = SampleSceneDepth(uv_up);
                 float raw_depth_down = SampleSceneDepth(uv_down);
                 float raw_depth_left = SampleSceneDepth(uv_left);
                 float raw_depth_right = SampleSceneDepth(uv_right);
 
-                // Ham derinlikten görüş alanı (view space) pozisyonunu ve Z derinliğini yeniden oluşturuyoruz.
-                // abs() kullanıyoruz çünkü görüş alanında Z değeri negatiftir.
                 float depth_up = abs(ComputeViewSpacePosition(uv_up, raw_depth_up, UNITY_MATRIX_I_P).z);
                 float depth_down = abs(ComputeViewSpacePosition(uv_down, raw_depth_down, UNITY_MATRIX_I_P).z);
                 float depth_left = abs(ComputeViewSpacePosition(uv_left, raw_depth_left, UNITY_MATRIX_I_P).z);
@@ -79,26 +77,29 @@ Shader "Hidden/Edge Detection"
                 
                 float depth_h_grad = depth_right - depth_left;
                 float depth_v_grad = depth_up - depth_down;
-                float depth_edge = sqrt(depth_h_grad * depth_h_grad + depth_v_grad * depth_v_grad);
+                float depth_gradient = sqrt(depth_h_grad * depth_h_grad + depth_v_grad * depth_v_grad);
 
                 float3 normal_h_grad = normal_right - normal_left;
                 float3 normal_v_grad = normal_up - normal_down;
-                float normal_edge = sqrt(dot(normal_h_grad, normal_h_grad) + dot(normal_v_grad, normal_v_grad));
+                float normal_gradient = sqrt(dot(normal_h_grad, normal_h_grad) + dot(normal_v_grad, normal_v_grad));
 
-                depth_edge = step(_DepthThreshold, depth_edge);
-                normal_edge = step(_NormalsThreshold, normal_edge);
+                // --- EN ETKİLİ Anti-Aliasing ---
+                // Yumuşatma miktarını doğrudan _AntiAliasingAmount'a bağlayarak slider'ın
+                // etkisini iki katına çıkarıyoruz. Bu sayede çok daha güçlü bir yumuşatma elde edilir.
+                float softness = _AntiAliasingAmount;
+
+                float depth_edge = smoothstep(_DepthThreshold - softness, _DepthThreshold + softness, depth_gradient);
+                float normal_edge = smoothstep(_NormalsThreshold - softness, _NormalsThreshold + softness, normal_gradient);
+
 
                 float edge = max(depth_edge, normal_edge);
                 
-                // --- YENİ DOKU UYGULAMA MANTIĞI ---
-                // Fırça Dokusunu, ekran UV'si yerine dünya pozisyonuna göre uygula
+                // --- DOKU UYGULAMA MANTIĞI ---
                 if (edge > 0.0)
                 {
-                    // Pikselin dünya pozisyonunu hesapla
                     float raw_depth = SampleSceneDepth(uv);
-                    float3 worldPos = ComputeWorldSpacePosition(uv, raw_depth, UNITY_MATRIX_I_VP);
+                    float3 worldPos = ComputeViewSpacePosition(uv, raw_depth, UNITY_MATRIX_I_VP);
                     
-                    // Dünya pozisyonunu kullanarak doku UV'si oluştur
                     float2 brush_uv = worldPos.xy * _BrushTiling;
                     float brush_sample = SAMPLE_TEXTURE2D(_BrushTex, sampler_BrushTex, brush_uv).r;
                     edge *= brush_sample;

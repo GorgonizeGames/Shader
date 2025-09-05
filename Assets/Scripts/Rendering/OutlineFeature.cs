@@ -21,6 +21,10 @@ public class OutlineFeature : ScriptableRendererFeature
         [Tooltip("Bir nesnenin kendi kıvrımlarındaki ana hatların hassasiyeti.")]
         [Range(0.1f, 10f)] public float normalsThreshold = 0.4f;
 
+        [Header("Kenar Yumuşatma")]
+        [Tooltip("Ana hatların kenar yumuşatma miktarını ayarlar. 0 en keskin, 1 en yumuşak halidir.")]
+        [Range(0f, 1f)] public float antiAliasingAmount = 0.5f;
+
         [Header("Fırça Dokusu Ayarları")]
         [Tooltip("Ana hatlara uygulanacak fırça darbesi dokusu (Siyah-Beyaz).")]
         public Texture2D brushTexture;
@@ -75,6 +79,7 @@ public class OutlineFeature : ScriptableRendererFeature
         private static readonly int OutlineColorProperty = Shader.PropertyToID("_OutlineColor");
         private static readonly int DepthThresholdProperty = Shader.PropertyToID("_DepthThreshold");
         private static readonly int NormalsThresholdProperty = Shader.PropertyToID("_NormalsThreshold");
+        private static readonly int AntiAliasingAmountProperty = Shader.PropertyToID("_AntiAliasingAmount");
         private static readonly int BrushTexProperty = Shader.PropertyToID("_BrushTex");
         private static readonly int BrushTilingProperty = Shader.PropertyToID("_BrushTiling");
 
@@ -93,16 +98,15 @@ public class OutlineFeature : ScriptableRendererFeature
             material.SetColor(OutlineColorProperty, settings.outlineColor);
             material.SetFloat(DepthThresholdProperty, settings.depthThreshold);
             material.SetFloat(NormalsThresholdProperty, settings.normalsThreshold);
+            material.SetFloat(AntiAliasingAmountProperty, settings.antiAliasingAmount);
             material.SetFloat(BrushTilingProperty, settings.brushTiling);
 
-            // Dokuyu atarken null kontrolü yap
             if (settings.brushTexture != null)
             {
                 material.SetTexture(BrushTexProperty, settings.brushTexture);
             }
             else
             {
-                // Eğer doku atanmamışsa, varsayılan beyaz dokuyu kullan (düz çizgi)
                 material.SetTexture(BrushTexProperty, Texture2D.whiteTexture);
             }
         }
@@ -125,3 +129,4 @@ public class OutlineFeature : ScriptableRendererFeature
         }
     }
 }
+
