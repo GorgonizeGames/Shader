@@ -1,0 +1,53 @@
+{
+  "name": "com.gorgonize.ultimate-toon-shader",
+  "version": "3.0.0",
+  "displayName": "Ultimate Toon Shader Pro",
+  "description": "Professional toon shading solution for Unity URP with advanced lighting, hatching effects, and comprehensive stylization options. Features modular architecture, performance optimization, and extensive customization capabilities.",
+  "unity": "2022.3",
+  "unityRelease": "0f1",
+  "documentationUrl": "https://docs.gorgonize.com/ultimate-toon-shader",
+  "changelogUrl": "https://docs.gorgonize.com/ultimate-toon-shader/changelog",
+  "licensesUrl": "https://docs.gorgonize.com/ultimate-toon-shader/licenses",
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "14.0.0",
+    "com.unity.mathematics": "1.2.6"
+  },
+  "keywords": [
+    "shader",
+    "toon",
+    "cartoon",
+    "anime",
+    "cel-shading",
+    "hatching",
+    "stylized",
+    "URP",
+    "rendering",
+    "material"
+  ],
+  "author": {
+    "name": "Gorgonize",
+    "email": "support@gorgonize.com",
+    "url": "https://gorgonize.com"
+  },
+  "hideInEditor": false,
+  "testables": [
+    "com.gorgonize.ultimate-toon-shader.tests"
+  ],
+  "samples": [
+    {
+      "displayName": "Demo Scenes",
+      "description": "Sample scenes demonstrating various toon shader styles and configurations",
+      "path": "Samples~/DemoScenes"
+    },
+    {
+      "displayName": "Preset Library", 
+      "description": "Collection of pre-configured material presets for different art styles",
+      "path": "Samples~/PresetLibrary"
+    },
+    {
+      "displayName": "Tutorial Materials",
+      "description": "Step-by-step tutorial materials and documentation", 
+      "path": "Samples~/Tutorials"
+    }
+  ]
+}
