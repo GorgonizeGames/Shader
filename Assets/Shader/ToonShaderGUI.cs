@@ -1,12 +1,11 @@
 using UnityEngine;
 using UnityEditor;
-using System.IO; // Path işlemleri için bu satırı ekliyoruz
+using System.IO;
 
-public class UltimateToonShaderGUI : ShaderGUI
+public class UltimateToonShaderProGUI : ShaderGUI
 {
-    // Logonuzu tutmak için bir değişken
     private static Texture2D logoTexture;
-
+    
     // Material Properties
     private MaterialProperty baseMap;
     private MaterialProperty baseColor;
@@ -35,6 +34,20 @@ public class UltimateToonShaderGUI : ShaderGUI
     private MaterialProperty specularSize;
     private MaterialProperty specularSmoothness;
     private MaterialProperty specularIntensity;
+    
+    // Hatching Properties
+    private MaterialProperty enableHatching;
+    private MaterialProperty hatchingTex;
+    private MaterialProperty crossHatchingTex;
+    private MaterialProperty hatchingDensity;
+    private MaterialProperty hatchingIntensity;
+    private MaterialProperty hatchingThreshold;
+    private MaterialProperty crossHatchingThreshold;
+    private MaterialProperty hatchingRotation;
+    
+    private MaterialProperty enableScreenSpaceHatching;
+    private MaterialProperty screenHatchScale;
+    private MaterialProperty screenHatchBias;
     
     private MaterialProperty enableMatcap;
     private MaterialProperty matcapTex;
@@ -67,6 +80,10 @@ public class UltimateToonShaderGUI : ShaderGUI
     private MaterialProperty subsurfacePower;
     private MaterialProperty subsurfaceIntensity;
     
+    private MaterialProperty enableOutline;
+    private MaterialProperty outlineColor;
+    private MaterialProperty outlineWidth;
+    
     private MaterialProperty hue;
     private MaterialProperty contrast;
     private MaterialProperty gamma;
@@ -82,24 +99,22 @@ public class UltimateToonShaderGUI : ShaderGUI
     private MaterialProperty ztest;
     
     // Foldout states
-    private bool showBase = true;
-    private bool showLighting = true;
-    private bool showAdvancedLighting = false;
-    private bool showRimLighting = false;
-    private bool showSpecular = false;
-    private bool showMatcap = false;
-    private bool showNormalMap = false;
-    private bool showDetail = false;
-    private bool showEmission = false;
-    private bool showFresnel = false;
-    private bool showSubsurface = false;
-    private bool showColorGrading = false;
-    private bool showStylization = false;
-    private bool showAdvanced = false;
-    
-    // Preset system
-    private int selectedPreset = 0;
-    private string[] presetNames = { "Custom", "Anime", "Cartoon", "Realistic Toon", "Cel Shaded", "Painterly" };
+    private static bool showBase = true;
+    private static bool showLighting = true;
+    private static bool showAdvancedLighting = false;
+    private static bool showRimLighting = false;
+    private static bool showSpecular = false;
+    private static bool showHatching = false;
+    private static bool showMatcap = false;
+    private static bool showNormalMap = false;
+    private static bool showDetail = false;
+    private static bool showEmission = false;
+    private static bool showFresnel = false;
+    private static bool showSubsurface = false;
+    private static bool showOutline = false;
+    private static bool showColorGrading = false;
+    private static bool showStylization = false;
+    private static bool showAdvanced = false;
     
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
@@ -110,7 +125,7 @@ public class UltimateToonShaderGUI : ShaderGUI
         DrawHeader();
         EditorGUILayout.Space();
         
-        // Preset System
+        // Preset System with fixed functionality
         DrawPresetSystem(materialEditor, material);
         EditorGUILayout.Space();
         
@@ -210,6 +225,79 @@ public class UltimateToonShaderGUI : ShaderGUI
             else
             {
                 SetKeyword(material, "_SPECULAR", false);
+            }
+            EditorGUILayout.EndVertical();
+        }
+        EditorGUILayout.EndFoldoutHeaderGroup();
+        
+        // Hatching Effects - NEW SECTION
+        showHatching = EditorGUILayout.BeginFoldoutHeaderGroup(showHatching, "🖊️ Hatching Effects");
+        if (showHatching)
+        {
+            EditorGUILayout.BeginVertical("helpBox");
+            materialEditor.ShaderProperty(enableHatching, "Enable Hatching");
+            
+            if (enableHatching.floatValue > 0)
+            {
+                EditorGUI.indentLevel++;
+                materialEditor.TexturePropertySingleLine(new GUIContent("Hatching Texture", "Main hatching texture"), hatchingTex);
+                materialEditor.TexturePropertySingleLine(new GUIContent("Cross Hatching Texture", "Cross hatching texture for deeper shadows"), crossHatchingTex);
+                
+                EditorGUILayout.Space(3);
+                materialEditor.RangeProperty(hatchingDensity, "Hatching Density");
+                materialEditor.RangeProperty(hatchingIntensity, "Hatching Intensity");
+                materialEditor.RangeProperty(hatchingThreshold, "Hatching Threshold");
+                materialEditor.RangeProperty(crossHatchingThreshold, "Cross Hatching Threshold");
+                materialEditor.RangeProperty(hatchingRotation, "Hatching Rotation");
+                
+                EditorGUILayout.Space(5);
+                materialEditor.ShaderProperty(enableScreenSpaceHatching, "Enable Screen Space Hatching");
+                
+                if (enableScreenSpaceHatching.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    materialEditor.RangeProperty(screenHatchScale, "Screen Hatch Scale");
+                    materialEditor.RangeProperty(screenHatchBias, "Screen Hatch Bias");
+                    EditorGUI.indentLevel--;
+                    SetKeyword(material, "_SCREEN_SPACE_HATCHING", true);
+                }
+                else
+                {
+                    SetKeyword(material, "_SCREEN_SPACE_HATCHING", false);
+                }
+                
+                EditorGUI.indentLevel--;
+                SetKeyword(material, "_HATCHING", true);
+            }
+            else
+            {
+                SetKeyword(material, "_HATCHING", false);
+                SetKeyword(material, "_SCREEN_SPACE_HATCHING", false);
+            }
+            
+            EditorGUILayout.HelpBox("💡 Hatching adds sketch-like crosshatch patterns based on lighting. Lower thresholds = more hatching in dark areas.", MessageType.Info);
+            EditorGUILayout.EndVertical();
+        }
+        EditorGUILayout.EndFoldoutHeaderGroup();
+        
+        // Outline - NEW SECTION
+        showOutline = EditorGUILayout.BeginFoldoutHeaderGroup(showOutline, "🖼️ Outline");
+        if (showOutline)
+        {
+            EditorGUILayout.BeginVertical("helpBox");
+            materialEditor.ShaderProperty(enableOutline, "Enable Outline");
+            
+            if (enableOutline.floatValue > 0)
+            {
+                EditorGUI.indentLevel++;
+                materialEditor.ColorProperty(outlineColor, "Outline Color");
+                materialEditor.RangeProperty(outlineWidth, "Outline Width");
+                EditorGUI.indentLevel--;
+                SetKeyword(material, "_OUTLINE", true);
+            }
+            else
+            {
+                SetKeyword(material, "_OUTLINE", false);
             }
             EditorGUILayout.EndVertical();
         }
@@ -432,11 +520,13 @@ public class UltimateToonShaderGUI : ShaderGUI
     
     private void FindProperties(MaterialProperty[] properties)
     {
+        // Base properties
         baseMap = FindProperty("_BaseMap", properties);
         baseColor = FindProperty("_BaseColor", properties);
         saturation = FindProperty("_Saturation", properties);
         brightness = FindProperty("_Brightness", properties);
         
+        // Lighting properties
         shadowThreshold = FindProperty("_ShadowThreshold", properties);
         shadowSmoothness = FindProperty("_ShadowSmoothness", properties);
         shadowColor = FindProperty("_ShadowColor", properties);
@@ -448,58 +538,88 @@ public class UltimateToonShaderGUI : ShaderGUI
         ambientOcclusion = FindProperty("_AmbientOcclusion", properties);
         lightWrapping = FindProperty("_LightWrapping", properties);
         
+        // Rim lighting
         enableRimLighting = FindProperty("_EnableRimLighting", properties);
         rimColor = FindProperty("_RimColor", properties);
         rimPower = FindProperty("_RimPower", properties);
         rimIntensity = FindProperty("_RimIntensity", properties);
         rimThreshold = FindProperty("_RimThreshold", properties);
         
+        // Specular
         enableSpecular = FindProperty("_EnableSpecular", properties);
         specularColor = FindProperty("_SpecularColor", properties);
         specularSize = FindProperty("_SpecularSize", properties);
         specularSmoothness = FindProperty("_SpecularSmoothness", properties);
         specularIntensity = FindProperty("_SpecularIntensity", properties);
         
+        // Hatching properties
+        enableHatching = FindProperty("_EnableHatching", properties);
+        hatchingTex = FindProperty("_HatchingTex", properties);
+        crossHatchingTex = FindProperty("_CrossHatchingTex", properties);
+        hatchingDensity = FindProperty("_HatchingDensity", properties);
+        hatchingIntensity = FindProperty("_HatchingIntensity", properties);
+        hatchingThreshold = FindProperty("_HatchingThreshold", properties);
+        crossHatchingThreshold = FindProperty("_CrossHatchingThreshold", properties);
+        hatchingRotation = FindProperty("_HatchingRotation", properties);
+        
+        enableScreenSpaceHatching = FindProperty("_EnableScreenSpaceHatching", properties);
+        screenHatchScale = FindProperty("_ScreenHatchScale", properties);
+        screenHatchBias = FindProperty("_ScreenHatchBias", properties);
+        
+        // Outline
+        enableOutline = FindProperty("_EnableOutline", properties);
+        outlineColor = FindProperty("_OutlineColor", properties);
+        outlineWidth = FindProperty("_OutlineWidth", properties);
+        
+        // Matcap
         enableMatcap = FindProperty("_EnableMatcap", properties);
         matcapTex = FindProperty("_MatcapTex", properties);
         matcapIntensity = FindProperty("_MatcapIntensity", properties);
         matcapBlendMode = FindProperty("_MatcapBlendMode", properties);
         
+        // Normal mapping
         enableNormalMap = FindProperty("_EnableNormalMap", properties);
         bumpMap = FindProperty("_BumpMap", properties);
         bumpScale = FindProperty("_BumpScale", properties);
         
+        // Detail
         enableDetail = FindProperty("_EnableDetail", properties);
         detailMap = FindProperty("_DetailMap", properties);
         detailNormalMap = FindProperty("_DetailNormalMap", properties);
         detailScale = FindProperty("_DetailScale", properties);
         detailNormalScale = FindProperty("_DetailNormalScale", properties);
         
+        // Emission
         enableEmission = FindProperty("_EnableEmission", properties);
         emissionMap = FindProperty("_EmissionMap", properties);
         emissionColor = FindProperty("_EmissionColor", properties);
         emissionIntensity = FindProperty("_EmissionIntensity", properties);
         emissionScrollSpeed = FindProperty("_EmissionScrollSpeed", properties);
         
+        // Fresnel
         enableFresnel = FindProperty("_EnableFresnel", properties);
         fresnelColor = FindProperty("_FresnelColor", properties);
         fresnelPower = FindProperty("_FresnelPower", properties);
         fresnelIntensity = FindProperty("_FresnelIntensity", properties);
         
+        // Subsurface
         enableSubsurface = FindProperty("_EnableSubsurface", properties);
         subsurfaceColor = FindProperty("_SubsurfaceColor", properties);
         subsurfacePower = FindProperty("_SubsurfacePower", properties);
         subsurfaceIntensity = FindProperty("_SubsurfaceIntensity", properties);
         
+        // Color grading
         hue = FindProperty("_Hue", properties);
         contrast = FindProperty("_Contrast", properties);
         gamma = FindProperty("_Gamma", properties);
         
+        // Stylization
         enablePosterize = FindProperty("_EnablePosterize", properties);
         posterizeLevels = FindProperty("_PosterizeLevels", properties);
         enableCelShading = FindProperty("_EnableCelShading", properties);
         celShadingSteps = FindProperty("_CelShadingSteps", properties);
         
+        // Advanced
         cutoff = FindProperty("_Cutoff", properties);
         cull = FindProperty("_Cull", properties);
         zwrite = FindProperty("_ZWrite", properties);
@@ -516,28 +636,22 @@ public class UltimateToonShaderGUI : ShaderGUI
     
     private void DrawHeader()
     {
-        // Logoyu daha önce yüklenmediyse yükle
         if (logoTexture == null)
         {
-            // Bu script'in yolunu bularak logoyu göreceli olarak bulmasını sağlıyoruz.
-            // Bu sayede projenin konumu değişse de logo bulunur.
-            string[] guids = AssetDatabase.FindAssets("t:script UltimateToonShaderGUI");
+            string[] guids = AssetDatabase.FindAssets("t:script UltimateToonShaderProGUI");
             if (guids.Length > 0)
             {
                 string scriptPath = AssetDatabase.GUIDToAssetPath(guids[0]);
                 string scriptDirectory = Path.GetDirectoryName(scriptPath);
-                // Logo dosyasının adı "logo.png" olmalı ve bu script ile aynı klasörde bulunmalı.
                 string logoPath = Path.Combine(scriptDirectory, "logo.png");
                 logoTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(logoPath);
             }
         }
 
-        // Logo başarıyla yüklendiyse çiz
         if (logoTexture != null)
         {
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            // Logonun yüksekliğini buradan ayarlayabilirsiniz
             GUILayout.Label(logoTexture, GUILayout.Height(80));
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -549,7 +663,7 @@ public class UltimateToonShaderGUI : ShaderGUI
         logoStyle.fontSize = 18;
         logoStyle.normal.textColor = new Color(0.3f, 0.7f, 1f, 1f);
         
-        EditorGUILayout.LabelField("GORGONIZE TOON SHADER", logoStyle);
+        EditorGUILayout.LabelField("GORGONIZE TOON SHADER PRO", logoStyle);
         
         GUIStyle versionStyle = new GUIStyle(GUI.skin.label);
         versionStyle.alignment = TextAnchor.MiddleCenter;
@@ -557,126 +671,370 @@ public class UltimateToonShaderGUI : ShaderGUI
         versionStyle.fontSize = 10;
         versionStyle.normal.textColor = Color.gray;
         
-        EditorGUILayout.LabelField("Unity 6 URP - Professional Edition v2.0", versionStyle);
+        EditorGUILayout.LabelField("Unity 6 URP - Professional Edition v3.0 with Hatching", versionStyle);
     }
     
     private void DrawPresetSystem(MaterialEditor materialEditor, Material material)
     {
         EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("🎭 Quick Presets", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Quick Presets", EditorStyles.boldLabel);
         
-        EditorGUI.BeginChangeCheck();
-        selectedPreset = EditorGUILayout.Popup("Apply Preset", selectedPreset, presetNames);
+        EditorGUILayout.BeginHorizontal();
         
-        if (EditorGUI.EndChangeCheck() && selectedPreset > 0)
+        if (GUILayout.Button("Anime Classic", GUILayout.Height(25)))
         {
-            ApplyPreset(selectedPreset, material);
-            selectedPreset = 0; // Reset to Custom
+            ApplyAnimePreset(material);
+            materialEditor.PropertiesChanged();
         }
         
+        if (GUILayout.Button("Cartoon Bold", GUILayout.Height(25)))
+        {
+            ApplyCartoonPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        if (GUILayout.Button("Realistic Toon", GUILayout.Height(25)))
+        {
+            ApplyRealisticToonPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        
+        if (GUILayout.Button("Cel Shaded", GUILayout.Height(25)))
+        {
+            ApplyCelShadedPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        if (GUILayout.Button("Painterly", GUILayout.Height(25)))
+        {
+            ApplyPainterlyPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        if (GUILayout.Button("Sketch Style", GUILayout.Height(25)))
+        {
+            ApplySketchPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        
+        if (GUILayout.Button("Comic Book", GUILayout.Height(25)))
+        {
+            ApplyComicPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        if (GUILayout.Button("Hatched Drawing", GUILayout.Height(25)))
+        {
+            ApplyHatchedPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        if (GUILayout.Button("Reset All", GUILayout.Height(25)))
+        {
+            ApplyResetPreset(material);
+            materialEditor.PropertiesChanged();
+        }
+        
+        EditorGUILayout.EndHorizontal();
+        
+        EditorGUILayout.HelpBox("Click any preset button to instantly apply predefined settings. Each preset is optimized for different art styles.", MessageType.Info);
         EditorGUILayout.EndVertical();
-    }
-    
-    private void ApplyPreset(int presetIndex, Material material)
-    {
-        switch (presetIndex)
-        {
-            case 1: // Anime
-                ApplyAnimePreset(material);
-                break;
-            case 2: // Cartoon
-                ApplyCartoonPreset(material);
-                break;
-            case 3: // Realistic Toon
-                ApplyRealisticToonPreset(material);
-                break;
-            case 4: // Cel Shaded
-                ApplyCelShadedPreset(material);
-                break;
-            case 5: // Painterly
-                ApplyPainterlyPreset(material);
-                break;
-        }
-        EditorUtility.SetDirty(material);
     }
     
     private void ApplyAnimePreset(Material material)
     {
+        // Reset all first
+        ApplyResetPreset(material);
+        
+        // Anime-specific settings
         shadowThreshold.floatValue = 0.4f;
         shadowSmoothness.floatValue = 0.1f;
-        enableRimLighting.floatValue = 1;
+        shadowColor.colorValue = new Color(0.8f, 0.8f, 0.9f, 1f);
+        shadowIntensity.floatValue = 0.7f;
+        
+        enableRimLighting.floatValue = 1f;
+        rimColor.colorValue = new Color(1f, 0.95f, 0.8f, 1f);
         rimPower.floatValue = 1.5f;
         rimIntensity.floatValue = 2f;
-        enableSpecular.floatValue = 1;
+        rimThreshold.floatValue = 0.1f;
+        
+        enableSpecular.floatValue = 1f;
+        specularColor.colorValue = Color.white;
         specularSize.floatValue = 0.05f;
         specularIntensity.floatValue = 2f;
+        specularSmoothness.floatValue = 0.02f;
+        
+        // Update keywords
         SetKeyword(material, "_RIM_LIGHTING", true);
         SetKeyword(material, "_SPECULAR", true);
+        
+        EditorUtility.SetDirty(material);
     }
     
     private void ApplyCartoonPreset(Material material)
     {
+        ApplyResetPreset(material);
+        
         shadowThreshold.floatValue = 0.6f;
         shadowSmoothness.floatValue = 0.02f;
-        enableRimLighting.floatValue = 1;
+        shadowColor.colorValue = new Color(0.6f, 0.6f, 0.8f, 1f);
+        shadowIntensity.floatValue = 0.9f;
+        
+        enableRimLighting.floatValue = 1f;
+        rimColor.colorValue = new Color(1f, 1f, 0.8f, 1f);
         rimIntensity.floatValue = 3f;
-        enableCelShading.floatValue = 1;
+        rimPower.floatValue = 2f;
+        
+        enableCelShading.floatValue = 1f;
         celShadingSteps.floatValue = 4f;
+        
+        contrast.floatValue = 1.3f;
+        saturation.floatValue = 1.2f;
+        
         SetKeyword(material, "_RIM_LIGHTING", true);
         SetKeyword(material, "_CEL_SHADING", true);
+        
+        EditorUtility.SetDirty(material);
     }
     
     private void ApplyRealisticToonPreset(Material material)
     {
+        ApplyResetPreset(material);
+        
         shadowThreshold.floatValue = 0.3f;
         shadowSmoothness.floatValue = 0.2f;
+        shadowColor.colorValue = new Color(0.7f, 0.7f, 0.8f, 1f);
+        shadowIntensity.floatValue = 0.6f;
+        
         indirectLightingBoost.floatValue = 0.5f;
-        enableSubsurface.floatValue = 1;
+        lightWrapping.floatValue = 0.3f;
+        
+        enableSubsurface.floatValue = 1f;
+        subsurfaceColor.colorValue = new Color(1f, 0.7f, 0.7f, 1f);
         subsurfaceIntensity.floatValue = 0.3f;
+        subsurfacePower.floatValue = 2f;
+        
+        enableFresnel.floatValue = 1f;
+        fresnelIntensity.floatValue = 0.5f;
+        fresnelPower.floatValue = 3f;
+        
         SetKeyword(material, "_SUBSURFACE", true);
+        SetKeyword(material, "_FRESNEL", true);
+        
+        EditorUtility.SetDirty(material);
     }
     
     private void ApplyCelShadedPreset(Material material)
     {
+        ApplyResetPreset(material);
+        
         shadowThreshold.floatValue = 0.5f;
         shadowSmoothness.floatValue = 0.01f;
-        enableCelShading.floatValue = 1;
+        shadowColor.colorValue = new Color(0.5f, 0.5f, 0.7f, 1f);
+        
+        enableCelShading.floatValue = 1f;
         celShadingSteps.floatValue = 3f;
-        enablePosterize.floatValue = 1;
+        
+        enablePosterize.floatValue = 1f;
         posterizeLevels.floatValue = 6f;
+        
+        contrast.floatValue = 1.4f;
+        saturation.floatValue = 1.1f;
+        
         SetKeyword(material, "_CEL_SHADING", true);
         SetKeyword(material, "_POSTERIZE", true);
+        
+        EditorUtility.SetDirty(material);
     }
     
     private void ApplyPainterlyPreset(Material material)
     {
+        ApplyResetPreset(material);
+        
         shadowThreshold.floatValue = 0.35f;
         shadowSmoothness.floatValue = 0.3f;
-        enableMatcap.floatValue = 1;
+        shadowColor.colorValue = new Color(0.6f, 0.7f, 0.8f, 1f);
+        
+        enableMatcap.floatValue = 1f;
         matcapIntensity.floatValue = 0.8f;
-        enableFresnel.floatValue = 1;
+        matcapBlendMode.floatValue = 1f; // Multiply
+        
+        enableFresnel.floatValue = 1f;
         fresnelIntensity.floatValue = 1.5f;
+        fresnelPower.floatValue = 2f;
+        
+        indirectLightingBoost.floatValue = 0.4f;
+        
         SetKeyword(material, "_MATCAP", true);
         SetKeyword(material, "_FRESNEL", true);
+        
+        EditorUtility.SetDirty(material);
+    }
+    
+    private void ApplySketchPreset(Material material)
+    {
+        ApplyResetPreset(material);
+        
+        shadowThreshold.floatValue = 0.4f;
+        shadowSmoothness.floatValue = 0.05f;
+        shadowColor.colorValue = new Color(0.9f, 0.9f, 0.9f, 1f);
+        
+        enableHatching.floatValue = 1f;
+        hatchingDensity.floatValue = 2f;
+        hatchingIntensity.floatValue = 0.8f;
+        hatchingThreshold.floatValue = 0.6f;
+        crossHatchingThreshold.floatValue = 0.3f;
+        hatchingRotation.floatValue = 45f;
+        
+        enableRimLighting.floatValue = 1f;
+        rimIntensity.floatValue = 1f;
+        rimColor.colorValue = new Color(0.8f, 0.8f, 0.8f, 1f);
+        
+        saturation.floatValue = 0.8f;
+        contrast.floatValue = 1.2f;
+        
+        SetKeyword(material, "_HATCHING", true);
+        SetKeyword(material, "_RIM_LIGHTING", true);
+        
+        EditorUtility.SetDirty(material);
+    }
+    
+    private void ApplyComicPreset(Material material)
+    {
+        ApplyResetPreset(material);
+        
+        shadowThreshold.floatValue = 0.5f;
+        shadowSmoothness.floatValue = 0.02f;
+        shadowColor.colorValue = new Color(0.3f, 0.3f, 0.5f, 1f);
+        
+        enableOutline.floatValue = 1f;
+        outlineColor.colorValue = Color.black;
+        outlineWidth.floatValue = 0.02f;
+        
+        enableRimLighting.floatValue = 1f;
+        rimIntensity.floatValue = 2.5f;
+        rimColor.colorValue = new Color(1f, 0.9f, 0.7f, 1f);
+        
+        enableSpecular.floatValue = 1f;
+        specularIntensity.floatValue = 3f;
+        specularSize.floatValue = 0.03f;
+        
+        saturation.floatValue = 1.3f;
+        contrast.floatValue = 1.4f;
+        
+        SetKeyword(material, "_OUTLINE", true);
+        SetKeyword(material, "_RIM_LIGHTING", true);
+        SetKeyword(material, "_SPECULAR", true);
+        
+        EditorUtility.SetDirty(material);
+    }
+    
+    private void ApplyHatchedPreset(Material material)
+    {
+        ApplyResetPreset(material);
+        
+        shadowThreshold.floatValue = 0.45f;
+        shadowSmoothness.floatValue = 0.1f;
+        shadowColor.colorValue = new Color(0.95f, 0.95f, 0.95f, 1f);
+        
+        enableHatching.floatValue = 1f;
+        hatchingDensity.floatValue = 1.5f;
+        hatchingIntensity.floatValue = 1.2f;
+        hatchingThreshold.floatValue = 0.7f;
+        crossHatchingThreshold.floatValue = 0.4f;
+        hatchingRotation.floatValue = 30f;
+        
+        enableScreenSpaceHatching.floatValue = 1f;
+        screenHatchScale.floatValue = 3f;
+        screenHatchBias.floatValue = 0.2f;
+        
+        saturation.floatValue = 0.7f;
+        contrast.floatValue = 1.3f;
+        gamma.floatValue = 1.2f;
+        
+        SetKeyword(material, "_HATCHING", true);
+        SetKeyword(material, "_SCREEN_SPACE_HATCHING", true);
+        
+        EditorUtility.SetDirty(material);
+    }
+    
+    private void ApplyResetPreset(Material material)
+    {
+        // Reset all properties to default values
+        baseColor.colorValue = Color.white;
+        saturation.floatValue = 1f;
+        brightness.floatValue = 1f;
+        
+        shadowThreshold.floatValue = 0.5f;
+        shadowSmoothness.floatValue = 0.05f;
+        shadowColor.colorValue = new Color(0.7f, 0.7f, 0.8f, 1f);
+        shadowIntensity.floatValue = 0.8f;
+        
+        indirectLightingBoost.floatValue = 0.3f;
+        ambientOcclusion.floatValue = 1f;
+        lightWrapping.floatValue = 0f;
+        
+        // Disable all features
+        enableRimLighting.floatValue = 0f;
+        enableSpecular.floatValue = 0f;
+        enableHatching.floatValue = 0f;
+        enableScreenSpaceHatching.floatValue = 0f;
+        enableOutline.floatValue = 0f;
+        enableMatcap.floatValue = 0f;
+        enableNormalMap.floatValue = 0f;
+        enableDetail.floatValue = 0f;
+        enableEmission.floatValue = 0f;
+        enableFresnel.floatValue = 0f;
+        enableSubsurface.floatValue = 0f;
+        enablePosterize.floatValue = 0f;
+        enableCelShading.floatValue = 0f;
+        useRampTexture.floatValue = 0f;
+        
+        // Reset color grading
+        hue.floatValue = 0f;
+        contrast.floatValue = 1f;
+        gamma.floatValue = 1f;
+        
+        // Disable all keywords
+        SetKeyword(material, "_RIM_LIGHTING", false);
+        SetKeyword(material, "_SPECULAR", false);
+        SetKeyword(material, "_HATCHING", false);
+        SetKeyword(material, "_SCREEN_SPACE_HATCHING", false);
+        SetKeyword(material, "_OUTLINE", false);
+        SetKeyword(material, "_MATCAP", false);
+        SetKeyword(material, "_NORMALMAP", false);
+        SetKeyword(material, "_DETAIL", false);
+        SetKeyword(material, "_EMISSION", false);
+        SetKeyword(material, "_FRESNEL", false);
+        SetKeyword(material, "_SUBSURFACE", false);
+        SetKeyword(material, "_POSTERIZE", false);
+        SetKeyword(material, "_CEL_SHADING", false);
+        SetKeyword(material, "_USE_RAMP_TEXTURE", false);
     }
     
     private void DrawInfo()
     {
         EditorGUILayout.BeginVertical("helpBox");
-        EditorGUILayout.LabelField("ℹ️ Shader Information", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Shader Information", EditorStyles.boldLabel);
         
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("✅ Unity 6 URP Compatible", EditorStyles.miniLabel);
-        EditorGUILayout.LabelField("📱 Mobile Optimized", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField("Unity 6 URP Compatible", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField("Mobile Optimized", EditorStyles.miniLabel);
         EditorGUILayout.EndHorizontal();
         
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("🌟 Advanced Toon Features", EditorStyles.miniLabel);
-        EditorGUILayout.LabelField("⚡ Performance Optimized", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField("Advanced Toon Features", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField("Hatching Effects", EditorStyles.miniLabel);
         EditorGUILayout.EndHorizontal();
         
         EditorGUILayout.Space(5);
-        EditorGUILayout.LabelField("💡 Tip: Use presets for quick setup, then customize individual properties!", EditorStyles.helpBox);
+        EditorGUILayout.LabelField("Tip: Use the preset buttons above for quick setup, then fine-tune individual properties below!", EditorStyles.helpBox);
         EditorGUILayout.EndVertical();
     }
 }

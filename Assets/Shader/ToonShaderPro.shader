@@ -1,4 +1,4 @@
-Shader "Custom/UltimateToonShader"
+Shader "Custom/UltimateToonShaderPro"
 {
     Properties
     {
@@ -34,6 +34,21 @@ Shader "Custom/UltimateToonShader"
         _SpecularSize ("Specular Size", Range(0.001, 1)) = 0.1
         _SpecularSmoothness ("Specular Smoothness", Range(0.001, 0.5)) = 0.05
         _SpecularIntensity ("Specular Intensity", Range(0, 5)) = 1
+        
+        [Header(Hatching Effects)]
+        [Toggle(_HATCHING)] _EnableHatching ("Enable Hatching", Float) = 0
+        _HatchingTex ("Hatching Texture", 2D) = "white" {}
+        _CrossHatchingTex ("Cross Hatching Texture", 2D) = "white" {}
+        _HatchingDensity ("Hatching Density", Range(0.1, 5)) = 1
+        _HatchingIntensity ("Hatching Intensity", Range(0, 2)) = 1
+        _HatchingThreshold ("Hatching Threshold", Range(0, 1)) = 0.5
+        _CrossHatchingThreshold ("Cross Hatching Threshold", Range(0, 1)) = 0.3
+        _HatchingRotation ("Hatching Rotation", Range(0, 360)) = 45
+        
+        [Header(Screen Space Hatching)]
+        [Toggle(_SCREEN_SPACE_HATCHING)] _EnableScreenSpaceHatching ("Enable Screen Space Hatching", Float) = 0
+        _ScreenHatchScale ("Screen Hatch Scale", Range(0.1, 10)) = 2
+        _ScreenHatchBias ("Screen Hatch Bias", Range(-1, 1)) = 0
         
         [Header(Matcap)]
         [Toggle(_MATCAP)] _EnableMatcap ("Enable Matcap", Float) = 0
@@ -72,6 +87,11 @@ Shader "Custom/UltimateToonShader"
         _SubsurfacePower ("Subsurface Power", Range(0.1, 10)) = 3
         _SubsurfaceIntensity ("Subsurface Intensity", Range(0, 2)) = 0.5
         
+        [Header(Outline)]
+        [Toggle(_OUTLINE)] _EnableOutline ("Enable Outline", Float) = 0
+        _OutlineColor ("Outline Color", Color) = (0, 0, 0, 1)
+        _OutlineWidth ("Outline Width", Range(0, 0.1)) = 0.01
+        
         [Header(Color Grading)]
         _Hue ("Hue Shift", Range(-180, 180)) = 0
         _Contrast ("Contrast", Range(0.5, 3)) = 1
@@ -99,6 +119,67 @@ Shader "Custom/UltimateToonShader"
             "Queue" = "Geometry"
         }
         
+        // Outline Pass
+        Pass
+        {
+            Name "Outline"
+            Tags { "LightMode" = "SRPDefaultUnlit" }
+            
+            Cull Front
+            ZWrite On
+            ZTest LEqual
+            
+            HLSLPROGRAM
+            #pragma vertex OutlineVertex
+            #pragma fragment OutlineFragment
+            #pragma shader_feature _OUTLINE
+            
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            
+            struct OutlineAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+            };
+            
+            struct OutlineVaryings
+            {
+                float4 positionHCS : SV_POSITION;
+            };
+            
+            CBUFFER_START(UnityPerMaterial)
+                float4 _OutlineColor;
+                float _OutlineWidth;
+            CBUFFER_END
+            
+            OutlineVaryings OutlineVertex(OutlineAttributes input)
+            {
+                OutlineVaryings output;
+                
+                #ifdef _OUTLINE
+                    float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+                    float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                    positionWS += normalWS * _OutlineWidth;
+                    output.positionHCS = TransformWorldToHClip(positionWS);
+                #else
+                    output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
+                #endif
+                
+                return output;
+            }
+            
+            float4 OutlineFragment(OutlineVaryings input) : SV_Target
+            {
+                #ifdef _OUTLINE
+                    return _OutlineColor;
+                #else
+                    discard;
+                    return float4(0, 0, 0, 0);
+                #endif
+            }
+            ENDHLSL
+        }
+        
         // Forward Lit Pass
         Pass
         {
@@ -124,6 +205,9 @@ Shader "Custom/UltimateToonShader"
             #pragma shader_feature _USE_RAMP_TEXTURE
             #pragma shader_feature _POSTERIZE
             #pragma shader_feature _CEL_SHADING
+            #pragma shader_feature _HATCHING
+            #pragma shader_feature _SCREEN_SPACE_HATCHING
+            #pragma shader_feature _OUTLINE
             
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
@@ -156,7 +240,8 @@ Shader "Custom/UltimateToonShader"
                 float3 bitangentWS : TEXCOORD4;
                 float3 viewDirWS : TEXCOORD5;
                 float4 shadowCoord : TEXCOORD6;
-                DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 7);
+                float4 screenPos : TEXCOORD7;
+                DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 8);
             };
             
             TEXTURE2D(_BaseMap);
@@ -184,6 +269,13 @@ Shader "Custom/UltimateToonShader"
             #ifdef _MATCAP
             TEXTURE2D(_MatcapTex);
             SAMPLER(sampler_MatcapTex);
+            #endif
+            
+            #ifdef _HATCHING
+            TEXTURE2D(_HatchingTex);
+            SAMPLER(sampler_HatchingTex);
+            TEXTURE2D(_CrossHatchingTex);
+            SAMPLER(sampler_CrossHatchingTex);
             #endif
             
             CBUFFER_START(UnityPerMaterial)
@@ -228,6 +320,17 @@ Shader "Custom/UltimateToonShader"
                 float _PosterizeLevels;
                 float _CelShadingSteps;
                 float _Cutoff;
+                
+                // Hatching properties
+                float4 _HatchingTex_ST;
+                float4 _CrossHatchingTex_ST;
+                float _HatchingDensity;
+                float _HatchingIntensity;
+                float _HatchingThreshold;
+                float _CrossHatchingThreshold;
+                float _HatchingRotation;
+                float _ScreenHatchScale;
+                float _ScreenHatchBias;
             CBUFFER_END
             
             // Utility functions
@@ -250,13 +353,9 @@ Shader "Custom/UltimateToonShader"
             
             float3 ApplyColorGrading(float3 color)
             {
-                // Apply gamma
                 color = pow(color, _Gamma);
-                
-                // Apply contrast
                 color = ((color - 0.5) * _Contrast) + 0.5;
                 
-                // Apply hue shift
                 if (_Hue != 0)
                 {
                     float3 hsv = RGBtoHSV(color);
@@ -265,7 +364,6 @@ Shader "Custom/UltimateToonShader"
                     color = HSVtoRGB(hsv);
                 }
                 
-                // Apply saturation and brightness
                 color = saturate(color * _Brightness);
                 float luminance = dot(color, float3(0.299, 0.587, 0.114));
                 color = lerp(luminance.xxx, color, _Saturation);
@@ -278,6 +376,58 @@ Shader "Custom/UltimateToonShader"
                 return floor(color * levels) / levels;
             }
             
+            float2 RotateUV(float2 uv, float rotation)
+            {
+                float rad = radians(rotation);
+                float cosAngle = cos(rad);
+                float sinAngle = sin(rad);
+                float2 center = float2(0.5, 0.5);
+                uv -= center;
+                float2 rotatedUV;
+                rotatedUV.x = uv.x * cosAngle - uv.y * sinAngle;
+                rotatedUV.y = uv.x * sinAngle + uv.y * cosAngle;
+                return rotatedUV + center;
+            }
+            
+            float CalculateHatching(float2 uv, float lightValue, float4 screenPos)
+            {
+                float hatching = 1.0;
+                
+                #ifdef _HATCHING
+                    // World space hatching
+                    float2 hatchUV = RotateUV(uv * _HatchingDensity, _HatchingRotation);
+                    float hatch1 = SAMPLE_TEXTURE2D(_HatchingTex, sampler_HatchingTex, hatchUV).r;
+                    
+                    if (lightValue < _HatchingThreshold)
+                    {
+                        hatching *= lerp(1.0, hatch1, _HatchingIntensity);
+                    }
+                    
+                    if (lightValue < _CrossHatchingThreshold)
+                    {
+                        float2 crossHatchUV = RotateUV(uv * _HatchingDensity, _HatchingRotation + 90);
+                        float crossHatch = SAMPLE_TEXTURE2D(_CrossHatchingTex, sampler_CrossHatchingTex, crossHatchUV).r;
+                        hatching *= lerp(1.0, crossHatch, _HatchingIntensity);
+                    }
+                #endif
+                
+                #ifdef _SCREEN_SPACE_HATCHING
+                    // Screen space hatching
+                    float2 screenUV = screenPos.xy / screenPos.w;
+                    screenUV *= _ScreenSpaceResolution.xy / _ScreenHatchScale;
+                    
+                    float screenHatch = sin(screenUV.x * 3.14159) * sin(screenUV.y * 3.14159);
+                    screenHatch = saturate(screenHatch + _ScreenHatchBias);
+                    
+                    if (lightValue < _HatchingThreshold)
+                    {
+                        hatching *= lerp(1.0, screenHatch, _HatchingIntensity);
+                    }
+                #endif
+                
+                return hatching;
+            }
+            
             Varyings ToonVertex(Attributes input)
             {
                 Varyings output;
@@ -288,6 +438,7 @@ Shader "Custom/UltimateToonShader"
                 output.positionHCS = positionInputs.positionCS;
                 output.positionWS = positionInputs.positionWS;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                output.screenPos = ComputeScreenPos(output.positionHCS);
                 
                 output.normalWS = normalInputs.normalWS;
                 output.tangentWS = normalInputs.tangentWS;
@@ -359,9 +510,15 @@ Shader "Custom/UltimateToonShader"
                 float shadowAttenuation = mainLight.shadowAttenuation;
                 toonRamp *= shadowAttenuation;
                 
+                // Apply hatching
+                float hatchingMask = CalculateHatching(input.uv, toonRamp, input.screenPos);
+                
                 // Mix shadow color
                 float3 shadowedColor = lerp(_ShadowColor.rgb * albedo.rgb, albedo.rgb, _ShadowIntensity);
                 float3 litColor = lerp(shadowedColor, albedo.rgb, toonRamp);
+                
+                // Apply hatching effect
+                litColor *= hatchingMask;
                 
                 // Apply ambient occlusion
                 litColor *= _AmbientOcclusion;
@@ -382,19 +539,17 @@ Shader "Custom/UltimateToonShader"
                     float2 matcapUV = normalVS.xy * 0.5 + 0.5;
                     float3 matcap = SAMPLE_TEXTURE2D(_MatcapTex, sampler_MatcapTex, matcapUV).rgb;
                     
-                    if (_MatcapBlendMode < 0.5) // Add
+                    if (_MatcapBlendMode < 0.5)
                         litColor += matcap * _MatcapIntensity;
-                    else if (_MatcapBlendMode < 1.5) // Multiply
+                    else if (_MatcapBlendMode < 1.5)
                         litColor *= lerp(1, matcap, _MatcapIntensity);
-                    else // Screen
+                    else
                         litColor = 1 - (1 - litColor) * (1 - matcap * _MatcapIntensity);
                 #endif
                 
                 // Apply main light color
                 litColor *= lightColor;
-
-                // --- HATA DÜZELTME BAŞLANGICI ---
-                // NdotV, Rim ve Fresnel için ortak olarak bir kez burada tanımlanıyor.
+                
                 #if defined(_RIM_LIGHTING) || defined(_FRESNEL)
                     float NdotV = saturate(dot(normalWS, viewDirWS));
                 #endif
@@ -412,7 +567,6 @@ Shader "Custom/UltimateToonShader"
                     float fresnel = pow(1.0 - NdotV, _FresnelPower) * _FresnelIntensity;
                     litColor += fresnel * _FresnelColor.rgb;
                 #endif
-                // --- HATA DÜZELTME SONU ---
                 
                 // Subsurface scattering
                 #ifdef _SUBSURFACE
@@ -527,6 +681,6 @@ Shader "Custom/UltimateToonShader"
         }
     }
     
-    CustomEditor "UltimateToonShaderGUI"
+    CustomEditor "UltimateToonShaderProGUI"
     FallBack "Hidden/Universal Render Pipeline/FallbackError"
 }

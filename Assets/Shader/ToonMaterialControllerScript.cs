@@ -64,6 +64,49 @@ public class ToonSpecular
 }
 
 [System.Serializable]
+public class ToonHatching
+{
+    [Header("Basic Hatching")]
+    public bool enableHatching = false;
+    public Texture2D hatchingTexture;
+    public Texture2D crossHatchingTexture;
+    
+    [Range(0.1f, 5f)]
+    public float hatchingDensity = 1f;
+    
+    [Range(0f, 2f)]
+    public float hatchingIntensity = 1f;
+    
+    [Range(0f, 1f)]
+    public float hatchingThreshold = 0.5f;
+    
+    [Range(0f, 1f)]
+    public float crossHatchingThreshold = 0.3f;
+    
+    [Range(0f, 360f)]
+    public float hatchingRotation = 45f;
+    
+    [Header("Screen Space Hatching")]
+    public bool enableScreenSpaceHatching = false;
+    
+    [Range(0.1f, 10f)]
+    public float screenHatchScale = 2f;
+    
+    [Range(-1f, 1f)]
+    public float screenHatchBias = 0f;
+}
+
+[System.Serializable]
+public class ToonOutline
+{
+    public bool enableOutline = false;
+    public Color outlineColor = Color.black;
+    
+    [Range(0f, 0.1f)]
+    public float outlineWidth = 0.01f;
+}
+
+[System.Serializable]
 public class ToonMatcap
 {
     public bool enableMatcap = false;
@@ -161,6 +204,10 @@ public class ToonAnimationSettings
     public bool animateHue = false;
     public float hueAnimationSpeed = 0.5f;
     
+    [Header("Hatching Animation")]
+    public bool animateHatching = false;
+    public float hatchingAnimationSpeed = 0.3f;
+    
     [Header("Breathing Effect")]
     public bool enableBreathingEffect = false;
     public float breathingSpeed = 1f;
@@ -168,11 +215,11 @@ public class ToonAnimationSettings
 }
 
 /// <summary>
-/// Ultimate Toon Material Controller
-/// Advanced runtime control system for the Ultimate Toon Shader
+/// Ultimate Toon Material Controller Pro
+/// Enhanced runtime control system for the Ultimate Toon Shader with Hatching Effects
 /// </summary>
 [RequireComponent(typeof(Renderer))]
-public class UltimateToonMaterialController : MonoBehaviour
+public class UltimateToonMaterialControllerPro : MonoBehaviour
 {
     [Header("Material Settings")]
     public Material toonMaterial;
@@ -187,6 +234,8 @@ public class UltimateToonMaterialController : MonoBehaviour
     [Header("Visual Effects")]
     public ToonRimLighting rimLighting = new ToonRimLighting();
     public ToonSpecular specular = new ToonSpecular();
+    public ToonHatching hatching = new ToonHatching();
+    public ToonOutline outline = new ToonOutline();
     public ToonMatcap matcap = new ToonMatcap();
     public ToonFresnel fresnel = new ToonFresnel();
     public ToonSubsurface subsurface = new ToonSubsurface();
@@ -239,6 +288,22 @@ public class UltimateToonMaterialController : MonoBehaviour
         public static readonly int SpecularSize = Shader.PropertyToID("_SpecularSize");
         public static readonly int SpecularSmoothness = Shader.PropertyToID("_SpecularSmoothness");
         public static readonly int SpecularIntensity = Shader.PropertyToID("_SpecularIntensity");
+        
+        // Hatching properties
+        public static readonly int HatchingTex = Shader.PropertyToID("_HatchingTex");
+        public static readonly int CrossHatchingTex = Shader.PropertyToID("_CrossHatchingTex");
+        public static readonly int HatchingDensity = Shader.PropertyToID("_HatchingDensity");
+        public static readonly int HatchingIntensity = Shader.PropertyToID("_HatchingIntensity");
+        public static readonly int HatchingThreshold = Shader.PropertyToID("_HatchingThreshold");
+        public static readonly int CrossHatchingThreshold = Shader.PropertyToID("_CrossHatchingThreshold");
+        public static readonly int HatchingRotation = Shader.PropertyToID("_HatchingRotation");
+        public static readonly int ScreenHatchScale = Shader.PropertyToID("_ScreenHatchScale");
+        public static readonly int ScreenHatchBias = Shader.PropertyToID("_ScreenHatchBias");
+        
+        // Outline properties
+        public static readonly int OutlineColor = Shader.PropertyToID("_OutlineColor");
+        public static readonly int OutlineWidth = Shader.PropertyToID("_OutlineWidth");
+        
         public static readonly int MatcapTex = Shader.PropertyToID("_MatcapTex");
         public static readonly int MatcapIntensity = Shader.PropertyToID("_MatcapIntensity");
         public static readonly int MatcapBlendMode = Shader.PropertyToID("_MatcapBlendMode");
@@ -332,6 +397,27 @@ public class UltimateToonMaterialController : MonoBehaviour
         materialInstance.SetFloat(ShaderIDs.SpecularSmoothness, specular.specularSmoothness);
         materialInstance.SetFloat(ShaderIDs.SpecularIntensity, specular.specularIntensity);
         
+        // Hatching
+        if (hatching.hatchingTexture != null)
+        {
+            materialInstance.SetTexture(ShaderIDs.HatchingTex, hatching.hatchingTexture);
+        }
+        if (hatching.crossHatchingTexture != null)
+        {
+            materialInstance.SetTexture(ShaderIDs.CrossHatchingTex, hatching.crossHatchingTexture);
+        }
+        materialInstance.SetFloat(ShaderIDs.HatchingDensity, hatching.hatchingDensity);
+        materialInstance.SetFloat(ShaderIDs.HatchingIntensity, hatching.hatchingIntensity);
+        materialInstance.SetFloat(ShaderIDs.HatchingThreshold, hatching.hatchingThreshold);
+        materialInstance.SetFloat(ShaderIDs.CrossHatchingThreshold, hatching.crossHatchingThreshold);
+        materialInstance.SetFloat(ShaderIDs.HatchingRotation, hatching.hatchingRotation);
+        materialInstance.SetFloat(ShaderIDs.ScreenHatchScale, hatching.screenHatchScale);
+        materialInstance.SetFloat(ShaderIDs.ScreenHatchBias, hatching.screenHatchBias);
+        
+        // Outline
+        materialInstance.SetColor(ShaderIDs.OutlineColor, outline.outlineColor);
+        materialInstance.SetFloat(ShaderIDs.OutlineWidth, outline.outlineWidth);
+        
         // Matcap
         if (matcap.matcapTexture != null)
         {
@@ -386,6 +472,9 @@ public class UltimateToonMaterialController : MonoBehaviour
         // Set shader keywords based on enabled features
         SetKeyword("_RIM_LIGHTING", rimLighting.enableRimLighting);
         SetKeyword("_SPECULAR", specular.enableSpecular);
+        SetKeyword("_HATCHING", hatching.enableHatching);
+        SetKeyword("_SCREEN_SPACE_HATCHING", hatching.enableScreenSpaceHatching);
+        SetKeyword("_OUTLINE", outline.enableOutline);
         SetKeyword("_MATCAP", matcap.enableMatcap);
         SetKeyword("_NORMALMAP", normalMap != null);
         SetKeyword("_EMISSION", emissionMap != null || emissionColor != Color.black);
@@ -431,6 +520,14 @@ public class UltimateToonMaterialController : MonoBehaviour
             materialInstance.SetFloat(ShaderIDs.Hue, animatedHue);
         }
         
+        // Hatching animation
+        if (animationSettings.animateHatching && hatching.enableHatching)
+        {
+            float animTime = animationTime * animationSettings.hatchingAnimationSpeed;
+            float animatedRotation = hatching.hatchingRotation + (Mathf.Sin(animTime) * 15f);
+            materialInstance.SetFloat(ShaderIDs.HatchingRotation, animatedRotation);
+        }
+        
         // Breathing effect
         if (animationSettings.enableBreathingEffect)
         {
@@ -465,6 +562,7 @@ public class UltimateToonMaterialController : MonoBehaviour
         subsurface.enableSubsurface = false;
         matcap.enableMatcap = false;
         stylization.enablePosterize = false;
+        hatching.enableScreenSpaceHatching = false;
         
         lightingSettings.shadowSmoothness = Mathf.Min(lightingSettings.shadowSmoothness, 0.1f);
         UpdateShaderKeywords();
@@ -475,6 +573,8 @@ public class UltimateToonMaterialController : MonoBehaviour
         // Enable some features
         rimLighting.enableRimLighting = true;
         specular.enableSpecular = true;
+        hatching.enableHatching = true;
+        hatching.enableScreenSpaceHatching = false;
         
         lightingSettings.shadowSmoothness = Mathf.Min(lightingSettings.shadowSmoothness, 0.2f);
         UpdateShaderKeywords();
@@ -485,6 +585,8 @@ public class UltimateToonMaterialController : MonoBehaviour
         // Enable most features
         rimLighting.enableRimLighting = true;
         specular.enableSpecular = true;
+        hatching.enableHatching = true;
+        hatching.enableScreenSpaceHatching = true;
         fresnel.enableFresnel = true;
         
         UpdateShaderKeywords();
@@ -495,6 +597,8 @@ public class UltimateToonMaterialController : MonoBehaviour
         // Enable all features
         rimLighting.enableRimLighting = true;
         specular.enableSpecular = true;
+        hatching.enableHatching = true;
+        hatching.enableScreenSpaceHatching = true;
         fresnel.enableFresnel = true;
         subsurface.enableSubsurface = true;
         matcap.enableMatcap = true;
@@ -522,6 +626,20 @@ public class UltimateToonMaterialController : MonoBehaviour
         rimLighting.rimIntensity = Mathf.Clamp(intensity, 0f, 5f);
         if (materialInstance != null)
             materialInstance.SetFloat(ShaderIDs.RimIntensity, rimLighting.rimIntensity);
+    }
+    
+    public void SetHatchingIntensity(float intensity)
+    {
+        hatching.hatchingIntensity = Mathf.Clamp(intensity, 0f, 2f);
+        if (materialInstance != null)
+            materialInstance.SetFloat(ShaderIDs.HatchingIntensity, hatching.hatchingIntensity);
+    }
+    
+    public void SetHatchingThreshold(float threshold)
+    {
+        hatching.hatchingThreshold = Mathf.Clamp01(threshold);
+        if (materialInstance != null)
+            materialInstance.SetFloat(ShaderIDs.HatchingThreshold, hatching.hatchingThreshold);
     }
     
     public void SetEmissionIntensity(float intensity)
@@ -559,6 +677,7 @@ public class UltimateToonMaterialController : MonoBehaviour
         UpdateAllProperties();
     }
     
+    // Toggle functions
     public void ToggleRimLighting()
     {
         rimLighting.enableRimLighting = !rimLighting.enableRimLighting;
@@ -571,13 +690,31 @@ public class UltimateToonMaterialController : MonoBehaviour
         SetKeyword("_SPECULAR", specular.enableSpecular);
     }
     
+    public void ToggleHatching()
+    {
+        hatching.enableHatching = !hatching.enableHatching;
+        SetKeyword("_HATCHING", hatching.enableHatching);
+    }
+    
+    public void ToggleScreenSpaceHatching()
+    {
+        hatching.enableScreenSpaceHatching = !hatching.enableScreenSpaceHatching;
+        SetKeyword("_SCREEN_SPACE_HATCHING", hatching.enableScreenSpaceHatching);
+    }
+    
+    public void ToggleOutline()
+    {
+        outline.enableOutline = !outline.enableOutline;
+        SetKeyword("_OUTLINE", outline.enableOutline);
+    }
+    
     public void ToggleMatcap()
     {
         matcap.enableMatcap = !matcap.enableMatcap;
         SetKeyword("_MATCAP", matcap.enableMatcap);
     }
     
-    // Advanced preset system
+    // Enhanced preset system
     public void ApplyAnimePreset()
     {
         lightingSettings.shadowThreshold = 0.4f;
@@ -588,6 +725,8 @@ public class UltimateToonMaterialController : MonoBehaviour
         specular.enableSpecular = true;
         specular.specularSize = 0.05f;
         specular.specularIntensity = 2f;
+        hatching.enableHatching = false;
+        outline.enableOutline = false;
         UpdateAllProperties();
     }
     
@@ -599,38 +738,57 @@ public class UltimateToonMaterialController : MonoBehaviour
         rimLighting.rimIntensity = 3f;
         stylization.enableCelShading = true;
         stylization.celShadingSteps = 4f;
+        outline.enableOutline = true;
+        outline.outlineWidth = 0.02f;
+        hatching.enableHatching = false;
         UpdateAllProperties();
     }
     
-    public void ApplyRealisticToonPreset()
+    public void ApplySketchPreset()
     {
-        lightingSettings.shadowThreshold = 0.3f;
-        lightingSettings.shadowSmoothness = 0.2f;
-        lightingSettings.indirectLightingBoost = 0.5f;
-        subsurface.enableSubsurface = true;
-        subsurface.subsurfaceIntensity = 0.3f;
+        lightingSettings.shadowThreshold = 0.4f;
+        lightingSettings.shadowSmoothness = 0.05f;
+        hatching.enableHatching = true;
+        hatching.hatchingDensity = 2f;
+        hatching.hatchingIntensity = 0.8f;
+        hatching.hatchingThreshold = 0.6f;
+        hatching.crossHatchingThreshold = 0.3f;
+        hatching.hatchingRotation = 45f;
+        colorGrading.saturation = 0.8f;
+        colorGrading.contrast = 1.2f;
         UpdateAllProperties();
     }
     
-    public void ApplyCelShadedPreset()
+    public void ApplyHatchedDrawingPreset()
+    {
+        lightingSettings.shadowThreshold = 0.45f;
+        lightingSettings.shadowSmoothness = 0.1f;
+        hatching.enableHatching = true;
+        hatching.hatchingDensity = 1.5f;
+        hatching.hatchingIntensity = 1.2f;
+        hatching.hatchingThreshold = 0.7f;
+        hatching.crossHatchingThreshold = 0.4f;
+        hatching.enableScreenSpaceHatching = true;
+        hatching.screenHatchScale = 3f;
+        hatching.screenHatchBias = 0.2f;
+        colorGrading.saturation = 0.7f;
+        colorGrading.contrast = 1.3f;
+        UpdateAllProperties();
+    }
+    
+    public void ApplyComicBookPreset()
     {
         lightingSettings.shadowThreshold = 0.5f;
-        lightingSettings.shadowSmoothness = 0.01f;
-        stylization.enableCelShading = true;
-        stylization.celShadingSteps = 3f;
-        stylization.enablePosterize = true;
-        stylization.posterizeLevels = 6f;
-        UpdateAllProperties();
-    }
-    
-    public void ApplyPainterlyPreset()
-    {
-        lightingSettings.shadowThreshold = 0.35f;
-        lightingSettings.shadowSmoothness = 0.3f;
-        matcap.enableMatcap = true;
-        matcap.matcapIntensity = 0.8f;
-        fresnel.enableFresnel = true;
-        fresnel.fresnelIntensity = 1.5f;
+        lightingSettings.shadowSmoothness = 0.02f;
+        outline.enableOutline = true;
+        outline.outlineColor = Color.black;
+        outline.outlineWidth = 0.02f;
+        rimLighting.enableRimLighting = true;
+        rimLighting.rimIntensity = 2.5f;
+        specular.enableSpecular = true;
+        specular.specularIntensity = 3f;
+        colorGrading.saturation = 1.3f;
+        colorGrading.contrast = 1.4f;
         UpdateAllProperties();
     }
     
@@ -640,6 +798,9 @@ public class UltimateToonMaterialController : MonoBehaviour
         int count = 0;
         if (rimLighting.enableRimLighting) count++;
         if (specular.enableSpecular) count++;
+        if (hatching.enableHatching) count++;
+        if (hatching.enableScreenSpaceHatching) count++;
+        if (outline.enableOutline) count++;
         if (matcap.enableMatcap) count++;
         if (fresnel.enableFresnel) count++;
         if (subsurface.enableSubsurface) count++;
@@ -650,7 +811,7 @@ public class UltimateToonMaterialController : MonoBehaviour
     
     public string GetPerformanceInfo()
     {
-        return $"Active Features: {GetActiveFeatureCount()}/7, Quality: {qualityLevel}, Animated: {(animationSettings.animateRimLighting || animationSettings.animateEmission)}";
+        return $"Active Features: {GetActiveFeatureCount()}/10, Quality: {qualityLevel}, Animated: {(animationSettings.animateRimLighting || animationSettings.animateEmission || animationSettings.animateHatching)}";
     }
     
     private void OnDestroy()
