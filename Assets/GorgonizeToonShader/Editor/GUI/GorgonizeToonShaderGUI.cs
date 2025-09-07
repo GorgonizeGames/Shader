@@ -1,1097 +1,4 @@
-// Advanced specular options
-                    if (anisotropy != null)
-                    {
-                        materialEditor.RangeProperty(anisotropy, "Anisotropy");
-                        SetKeywordSafe(material, "_SPECULAR_ANISOTROPIC", Mathf.Abs(anisotropy.floatValue) > 0.001f);
-                    }
-                    
-                    if (specularSteps != null)
-                    {
-                        materialEditor.RangeProperty(specularSteps, "Specular Steps");
-                        SetKeywordSafe(material, "_SPECULAR_STEPPED", specularSteps.floatValue > 1);
-                    }
-                    
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawHatchingSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableHatching == null) return;
-            
-            showHatching = DrawStyledFoldout(showHatching, "Hatching Effects", "🖊️");
-            
-            if (showHatching)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableHatching, "Enable Hatching");
-                SetKeywordSafe(material, "_HATCHING", enableHatching.floatValue > 0);
-                
-                if (enableHatching.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    
-                    // Textures
-                    if (hatchingTex != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Primary Hatching", "Main hatching pattern"), hatchingTex);
-                    if (crossHatchingTex != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Cross Hatching", "Cross hatching for deeper shadows"), crossHatchingTex);
-                    if (hatchingTex2 != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Secondary Hatching", "Additional hatching layer"), hatchingTex2);
-                    
-                    EditorGUILayout.Space(3f);
-                    
-                    // Parameters
-                    if (hatchingDensity != null)
-                        materialEditor.RangeProperty(hatchingDensity, "Hatching Density");
-                    if (hatchingIntensity != null)
-                        materialEditor.RangeProperty(hatchingIntensity, "Hatching Intensity");
-                    if (hatchingThreshold != null)
-                        materialEditor.RangeProperty(hatchingThreshold, "Primary Threshold");
-                    if (crossHatchingThreshold != null)
-                        materialEditor.RangeProperty(crossHatchingThreshold, "Cross Hatch Threshold");
-                    if (secondaryHatchingThreshold != null)
-                        materialEditor.RangeProperty(secondaryHatchingThreshold, "Secondary Threshold");
-                    if (hatchingRotation != null)
-                        materialEditor.RangeProperty(hatchingRotation, "Hatching Rotation");
-                    
-                    // Animation
-                    if (hatchingAnimSpeed != null)
-                    {
-                        materialEditor.RangeProperty(hatchingAnimSpeed, "Animation Speed");
-                        SetKeywordSafe(material, "_HATCHING_ANIMATED", hatchingAnimSpeed.floatValue > 0.001f);
-                    }
-                    
-                    EditorGUILayout.Space(5f);
-                    
-                    // Screen space hatching
-                    if (enableScreenSpaceHatching != null)
-                    {
-                        materialEditor.ShaderProperty(enableScreenSpaceHatching, "Enable Screen Space Hatching");
-                        SetKeywordSafe(material, "_SCREEN_SPACE_HATCHING", enableScreenSpaceHatching.floatValue > 0);
-                        
-                        if (enableScreenSpaceHatching.floatValue > 0)
-                        {
-                            EditorGUI.indentLevel++;
-                            if (screenHatchScale != null)
-                                materialEditor.RangeProperty(screenHatchScale, "Screen Hatch Scale");
-                            if (screenHatchBias != null)
-                                materialEditor.RangeProperty(screenHatchBias, "Screen Hatch Bias");
-                            EditorGUI.indentLevel--;
-                        }
-                    }
-                    
-                    EditorGUI.indentLevel--;
-                }
-                
-                DrawInfoBox("Hatching adds sketch-like crosshatch patterns based on lighting. Lower thresholds = more hatching in dark areas.", MessageType.Info);
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawMatcapSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableMatcap == null) return;
-            
-            showMatcap = DrawStyledFoldout(showMatcap, "Matcap", "🎭");
-            
-            if (showMatcap)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableMatcap, "Enable Matcap");
-                SetKeywordSafe(material, "_MATCAP", enableMatcap.floatValue > 0);
-                
-                if (enableMatcap.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    if (matcapTex != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Matcap Texture"), matcapTex);
-                    if (matcapIntensity != null)
-                        materialEditor.RangeProperty(matcapIntensity, "Matcap Intensity");
-                    
-                    if (matcapBlendMode != null)
-                    {
-                        string[] blendModes = {"Add", "Multiply", "Screen", "Overlay"};
-                        int blendMode = (int)matcapBlendMode.floatValue;
-                        blendMode = EditorGUILayout.Popup("Blend Mode", blendMode, blendModes);
-                        matcapBlendMode.floatValue = blendMode;
-                    }
-                    
-                    if (matcapRotation != null)
-                        materialEditor.RangeProperty(matcapRotation, "Matcap Rotation");
-                    
-                    SetKeywordSafe(material, "_MATCAP_PERSPECTIVE_CORRECTION", true);
-                    
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawNormalMapSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableNormalMap == null) return;
-            
-            showNormalMap = DrawStyledFoldout(showNormalMap, "Normal Mapping", "🗺️");
-            
-            if (showNormalMap)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableNormalMap, "Enable Normal Map");
-                SetKeywordSafe(material, "_NORMALMAP", enableNormalMap.floatValue > 0);
-                
-                if (enableNormalMap.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    if (bumpMap != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Normal Map"), bumpMap);
-                    if (bumpScale != null && bumpMap?.textureValue != null)
-                        materialEditor.RangeProperty(bumpScale, "Normal Scale");
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawDetailSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableDetail == null) return;
-            
-            showDetail = DrawStyledFoldout(showDetail, "Detail Mapping", "🔍");
-            
-            if (showDetail)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableDetail, "Enable Detail");
-                SetKeywordSafe(material, "_DETAIL", enableDetail.floatValue > 0);
-                
-                if (enableDetail.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    if (detailMap != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Detail Albedo"), detailMap);
-                    if (detailNormalMap != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Detail Normal"), detailNormalMap);
-                    if (detailScale != null)
-                        materialEditor.RangeProperty(detailScale, "Detail Scale");
-                    if (detailNormalScale != null)
-                        materialEditor.RangeProperty(detailNormalScale, "Detail Normal Scale");
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawEmissionSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableEmission == null) return;
-            
-            showEmission = DrawStyledFoldout(showEmission, "Emission", "🔥");
-            
-            if (showEmission)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableEmission, "Enable Emission");
-                SetKeywordSafe(material, "_EMISSION", enableEmission.floatValue > 0);
-                
-                if (enableEmission.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    if (emissionMap != null && emissionColor != null)
-                        materialEditor.TexturePropertyWithHDRColor(new GUIContent("Emission"), emissionMap, emissionColor, false);
-                    else if (emissionColor != null)
-                        materialEditor.ColorProperty(emissionColor, "Emission Color");
-                    
-                    if (emissionIntensity != null)
-                        materialEditor.RangeProperty(emissionIntensity, "Emission Intensity");
-                    
-                    if (emissionScrollSpeed != null)
-                        materialEditor.VectorProperty(emissionScrollSpeed, "Scroll Speed (X,Y)");
-                    
-                    // Pulsing emission
-                    if (emissionPulseSpeed != null && emissionPulseIntensity != null)
-                    {
-                        EditorGUILayout.LabelField("Pulsing Emission", EditorStyles.boldLabel);
-                        materialEditor.RangeProperty(emissionPulseSpeed, "Pulse Speed");
-                        materialEditor.RangeProperty(emissionPulseIntensity, "Pulse Intensity");
-                        SetKeywordSafe(material, "_EMISSION_PULSING", emissionPulseSpeed.floatValue > 0.001f);
-                    }
-                    
-                    // Temperature-based emission
-                    if (emissionTemperature != null)
-                    {
-                        materialEditor.RangeProperty(emissionTemperature, "Temperature (K)");
-                        SetKeywordSafe(material, "_EMISSION_TEMPERATURE_BASED", emissionTemperature.floatValue != 6500f);
-                    }
-                    
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawFresnelSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableFresnel == null) return;
-            
-            showFresnel = DrawStyledFoldout(showFresnel, "Fresnel Effect", "🌀");
-            
-            if (showFresnel)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableFresnel, "Enable Fresnel");
-                SetKeywordSafe(material, "_FRESNEL", enableFresnel.floatValue > 0);
-                
-                if (enableFresnel.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    if (fresnelColor != null)
-                        materialEditor.ColorProperty(fresnelColor, "Fresnel Color");
-                    if (fresnelPower != null)
-                        materialEditor.RangeProperty(fresnelPower, "Fresnel Power");
-                    if (fresnelIntensity != null)
-                        materialEditor.RangeProperty(fresnelIntensity, "Fresnel Intensity");
-                    
-                    // Iridescence
-                    if (iridescenceIntensity != null)
-                    {
-                        materialEditor.RangeProperty(iridescenceIntensity, "Iridescence Intensity");
-                        SetKeywordSafe(material, "_FRESNEL_IRIDESCENCE", iridescenceIntensity.floatValue > 0.001f);
-                    }
-                    
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawSubsurfaceSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableSubsurface == null) return;
-            
-            showSubsurface = DrawStyledFoldout(showSubsurface, "Subsurface Scattering", "🌸");
-            
-            if (showSubsurface)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableSubsurface, "Enable Subsurface");
-                SetKeywordSafe(material, "_SUBSURFACE", enableSubsurface.floatValue > 0);
-                
-                if (enableSubsurface.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    if (subsurfaceColor != null)
-                        materialEditor.ColorProperty(subsurfaceColor, "Subsurface Color");
-                    if (subsurfacePower != null)
-                        materialEditor.RangeProperty(subsurfacePower, "Subsurface Power");
-                    if (subsurfaceIntensity != null)
-                        materialEditor.RangeProperty(subsurfaceIntensity, "Subsurface Intensity");
-                    if (subsurfaceDistortion != null)
-                        materialEditor.RangeProperty(subsurfaceDistortion, "Subsurface Distortion");
-                    if (subsurfaceThickness != null)
-                        materialEditor.TexturePropertySingleLine(new GUIContent("Thickness Map"), subsurfaceThickness);
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawOutlineSection(MaterialEditor materialEditor, Material material)
-        {
-            if (enableOutline == null) return;
-            
-            showOutline = DrawStyledFoldout(showOutline, "Outline", "🖼️");
-            
-            if (showOutline)
-            {
-                BeginStyledBox();
-                
-                materialEditor.ShaderProperty(enableOutline, "Enable Outline");
-                SetKeywordSafe(material, "_OUTLINE", enableOutline.floatValue > 0);
-                
-                if (enableOutline.floatValue > 0)
-                {
-                    EditorGUI.indentLevel++;
-                    if (outlineColor != null)
-                        materialEditor.ColorProperty(outlineColor, "Outline Color");
-                    if (outlineWidth != null)
-                        materialEditor.RangeProperty(outlineWidth, "Outline Width");
-                    
-                    if (outlineMode != null)
-                    {
-                        string[] outlineModes = {"Normal", "Position", "Clip"};
-                        int mode = (int)outlineMode.floatValue;
-                        mode = EditorGUILayout.Popup("Outline Mode", mode, outlineModes);
-                        outlineMode.floatValue = mode;
-                    }
-                    
-                    if (outlineFadeDistance != null)
-                    {
-                        materialEditor.RangeProperty(outlineFadeDistance, "Fade Distance");
-                        SetKeywordSafe(material, "_OUTLINE_DISTANCE_FADE", outlineFadeDistance.floatValue > 0.001f);
-                    }
-                    
-                    if (outlineDepthBiasValue != null)
-                    {
-                        materialEditor.RangeProperty(outlineDepthBiasValue, "Depth Bias Value");
-                        SetKeywordSafe(material, "_OUTLINE_DEPTH_BIAS", outlineDepthBiasValue.floatValue > 0.001f);
-                    }
-                    
-                    EditorGUI.indentLevel--;
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawStylizationSection(MaterialEditor materialEditor, Material material)
-        {
-            showColorGrading = DrawStyledFoldout(showColorGrading, "Color Grading", "🎨");
-            
-            if (showColorGrading)
-            {
-                BeginStyledBox();
-                
-                if (hue != null)
-                    materialEditor.RangeProperty(hue, "Hue Shift");
-                if (contrast != null)
-                    materialEditor.RangeProperty(contrast, "Contrast");
-                if (gamma != null)
-                    materialEditor.RangeProperty(gamma, "Gamma");
-                if (colorTemperature != null)
-                    materialEditor.RangeProperty(colorTemperature, "Color Temperature");
-                if (colorTint != null)
-                    materialEditor.RangeProperty(colorTint, "Color Tint");
-                if (vibrance != null)
-                    materialEditor.RangeProperty(vibrance, "Vibrance");
-                
-                EndStyledBox();
-            }
-            
-            showStylization = DrawStyledFoldout(showStylization, "Stylization", "🎭");
-            
-            if (showStylization)
-            {
-                BeginStyledBox();
-                
-                // Posterization
-                if (enablePosterize != null)
-                {
-                    materialEditor.ShaderProperty(enablePosterize, "Enable Posterize");
-                    SetKeywordSafe(material, "_POSTERIZE", enablePosterize.floatValue > 0);
-                    
-                    if (enablePosterize.floatValue > 0 && posterizeLevels != null)
-                    {
-                        EditorGUI.indentLevel++;
-                        materialEditor.RangeProperty(posterizeLevels, "Posterize Levels");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                // Cel Shading
-                if (enableCelShading != null)
-                {
-                    materialEditor.ShaderProperty(enableCelShading, "Enable Cel Shading");
-                    SetKeywordSafe(material, "_CEL_SHADING", enableCelShading.floatValue > 0);
-                    
-                    if (enableCelShading.floatValue > 0 && celShadingSteps != null)
-                    {
-                        EditorGUI.indentLevel++;
-                        materialEditor.RangeProperty(celShadingSteps, "Cel Shading Steps");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                // Dithering
-                if (enableDithering != null)
-                {
-                    materialEditor.ShaderProperty(enableDithering, "Enable Dithering");
-                    SetKeywordSafe(material, "_DITHERING", enableDithering.floatValue > 0);
-                    
-                    if (enableDithering.floatValue > 0 && ditheringIntensity != null)
-                    {
-                        EditorGUI.indentLevel++;
-                        materialEditor.RangeProperty(ditheringIntensity, "Dithering Intensity");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawAdvancedEffectsSection(MaterialEditor materialEditor, Material material)
-        {
-            showAdvancedEffects = DrawStyledFoldout(showAdvancedEffects, "Advanced Effects", "✨");
-            
-            if (showAdvancedEffects)
-            {
-                // Force Field Effect
-                BeginStyledBox();
-                EditorGUILayout.LabelField("Force Field Effect", CreateBoldLabelStyle());
-                
-                if (enableForceField != null)
-                {
-                    materialEditor.ShaderProperty(enableForceField, "Enable Force Field");
-                    SetKeywordSafe(material, "_FORCE_FIELD", enableForceField.floatValue > 0);
-                    
-                    if (enableForceField.floatValue > 0)
-                    {
-                        EditorGUI.indentLevel++;
-                        if (forceFieldColor != null)
-                            materialEditor.ColorProperty(forceFieldColor, "Force Field Color");
-                        if (forceFieldIntensity != null)
-                            materialEditor.RangeProperty(forceFieldIntensity, "Force Field Intensity");
-                        if (forceFieldFrequency != null)
-                            materialEditor.RangeProperty(forceFieldFrequency, "Force Field Frequency");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                EndStyledBox();
-                
-                // Hologram Effect
-                BeginStyledBox();
-                EditorGUILayout.LabelField("Hologram Effect", CreateBoldLabelStyle());
-                
-                if (enableHologram != null)
-                {
-                    materialEditor.ShaderProperty(enableHologram, "Enable Hologram");
-                    SetKeywordSafe(material, "_HOLOGRAM", enableHologram.floatValue > 0);
-                    
-                    if (enableHologram.floatValue > 0)
-                    {
-                        EditorGUI.indentLevel++;
-                        if (hologramIntensity != null)
-                            materialEditor.RangeProperty(hologramIntensity, "Hologram Intensity");
-                        if (hologramFlicker != null)
-                            materialEditor.RangeProperty(hologramFlicker, "Hologram Flicker");
-                        if (hologramScanlines != null)
-                            materialEditor.RangeProperty(hologramScanlines, "Hologram Scanlines");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                EndStyledBox();
-                
-                // Dissolve Effect
-                BeginStyledBox();
-                EditorGUILayout.LabelField("Dissolve Effect", CreateBoldLabelStyle());
-                
-                if (enableDissolve != null)
-                {
-                    materialEditor.ShaderProperty(enableDissolve, "Enable Dissolve");
-                    SetKeywordSafe(material, "_DISSOLVE", enableDissolve.floatValue > 0);
-                    
-                    if (enableDissolve.floatValue > 0)
-                    {
-                        EditorGUI.indentLevel++;
-                        if (dissolveNoise != null)
-                            materialEditor.TexturePropertySingleLine(new GUIContent("Dissolve Noise"), dissolveNoise);
-                        if (dissolveAmount != null)
-                            materialEditor.RangeProperty(dissolveAmount, "Dissolve Amount");
-                        if (dissolveEdgeWidth != null)
-                            materialEditor.RangeProperty(dissolveEdgeWidth, "Dissolve Edge Width");
-                        if (dissolveEdgeColor != null)
-                            materialEditor.ColorProperty(dissolveEdgeColor, "Dissolve Edge Color");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawAnimationSection(MaterialEditor materialEditor, Material material)
-        {
-            showAnimation = DrawStyledFoldout(showAnimation, "Animation System", "🎬");
-            
-            if (showAnimation)
-            {
-                BeginStyledBox();
-                
-                if (enableAnimatedProperties != null)
-                {
-                    materialEditor.ShaderProperty(enableAnimatedProperties, "Enable Animations");
-                    SetKeywordSafe(material, "_ANIMATED_PROPERTIES", enableAnimatedProperties.floatValue > 0);
-                    
-                    if (enableAnimatedProperties.floatValue > 0 && animationSpeed != null)
-                    {
-                        EditorGUI.indentLevel++;
-                        materialEditor.RangeProperty(animationSpeed, "Global Animation Speed");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                if (enableVertexAnimation != null)
-                {
-                    materialEditor.ShaderProperty(enableVertexAnimation, "Enable Vertex Animation");
-                    SetKeywordSafe(material, "_VERTEX_ANIMATION", enableVertexAnimation.floatValue > 0);
-                    
-                    if (enableVertexAnimation.floatValue > 0)
-                    {
-                        EditorGUI.indentLevel++;
-                        if (vertexAnimationIntensity != null)
-                            materialEditor.RangeProperty(vertexAnimationIntensity, "Vertex Animation Intensity");
-                        if (vertexAnimationFrequency != null)
-                            materialEditor.RangeProperty(vertexAnimationFrequency, "Vertex Animation Frequency");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawPerformancePropertiesSection(MaterialEditor materialEditor, Material material)
-        {
-            showPerformance = DrawStyledFoldout(showPerformance, "Performance & Quality", "⚡");
-            
-            if (showPerformance)
-            {
-                BeginStyledBox();
-                
-                if (qualityLevel != null)
-                {
-                    string[] qualityNames = { "Low", "Medium", "High", "Ultra" };
-                    int quality = (int)qualityLevel.floatValue;
-                    quality = EditorGUILayout.Popup("Quality Level", quality, qualityNames);
-                    qualityLevel.floatValue = quality;
-                }
-                
-                if (enableLODFade != null)
-                {
-                    materialEditor.ShaderProperty(enableLODFade, "Enable LOD Fade");
-                    SetKeywordSafe(material, "_LOD_FADE", enableLODFade.floatValue > 0);
-                    
-                    if (enableLODFade.floatValue > 0 && lodFadeDistance != null)
-                    {
-                        EditorGUI.indentLevel++;
-                        materialEditor.RangeProperty(lodFadeDistance, "LOD Fade Distance");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                if (enableInstancing != null)
-                {
-                    materialEditor.ShaderProperty(enableInstancing, "GPU Instancing");
-                    SetKeywordSafe(material, "_INSTANCING_SUPPORT", enableInstancing.floatValue > 0);
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawAdvancedSection(MaterialEditor materialEditor, Material material)
-        {
-            showAdvanced = DrawStyledFoldout(showAdvanced, "Advanced Rendering", "⚙️");
-            
-            if (showAdvanced)
-            {
-                BeginStyledBox();
-                
-                if (cutoff != null)
-                    materialEditor.RangeProperty(cutoff, "Alpha Cutoff");
-                if (cull != null)
-                    materialEditor.ShaderProperty(cull, "Cull Mode");
-                if (zwrite != null)
-                    materialEditor.ShaderProperty(zwrite, "Z Write");
-                if (ztest != null)
-                    materialEditor.ShaderProperty(ztest, "Z Test");
-                if (srcBlend != null)
-                    materialEditor.ShaderProperty(srcBlend, "Src Blend");
-                if (dstBlend != null)
-                    materialEditor.ShaderProperty(dstBlend, "Dst Blend");
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawDebugSection(MaterialEditor materialEditor, Material material)
-        {
-            showDebug = DrawStyledFoldout(showDebug, "Debug & Visualization", "🔍");
-            
-            if (showDebug)
-            {
-                BeginStyledBox();
-                
-                if (debugMode != null)
-                {
-                    materialEditor.ShaderProperty(debugMode, "Debug Mode");
-                    SetKeywordSafe(material, "_DEBUG_MODE", debugMode.floatValue > 0);
-                    
-                    if (debugMode.floatValue > 0 && debugView != null)
-                    {
-                        EditorGUI.indentLevel++;
-                        string[] debugViews = {"None", "Normals", "Lighting", "Shadows", "Hatching"};
-                        int view = (int)debugView.floatValue;
-                        view = EditorGUILayout.Popup("Debug View", view, debugViews);
-                        debugView.floatValue = view;
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                if (showWireframe != null)
-                {
-                    materialEditor.ShaderProperty(showWireframe, "Show Wireframe");
-                    SetKeywordSafe(material, "_WIREFRAME", showWireframe.floatValue > 0);
-                    
-                    if (showWireframe.floatValue > 0)
-                    {
-                        EditorGUI.indentLevel++;
-                        if (wireframeColor != null)
-                            materialEditor.ColorProperty(wireframeColor, "Wireframe Color");
-                        if (wireframeThickness != null)
-                            materialEditor.RangeProperty(wireframeThickness, "Wireframe Thickness");
-                        EditorGUI.indentLevel--;
-                    }
-                }
-                
-                EndStyledBox();
-            }
-        }
-        
-        private void DrawFooter()
-        {
-            BeginStyledBox();
-            EditorGUILayout.LabelField("Shader Information", CreateBoldLabelStyle());
-            
-            BeginHorizontalLayout();
-            EditorGUILayout.LabelField("Unity 6 URP Compatible", CreateSmallLabelStyle());
-            EditorGUILayout.LabelField("Mobile Optimized", CreateSmallLabelStyle());
-            EndHorizontalLayout();
-            
-            BeginHorizontalLayout();
-            EditorGUILayout.LabelField("Advanced NPR Features", CreateSmallLabelStyle());
-            EditorGUILayout.LabelField("AAA Quality Rendering", CreateSmallLabelStyle());
-            EndHorizontalLayout();
-            
-            EditorGUILayout.Space(5f);
-            DrawInfoBox("Use the preset buttons for quick setup, then fine-tune individual properties below!", MessageType.Info);
-            EndStyledBox();
-        }
-        
-        #region Utility Methods
-        
-        private void SetKeywordSafe(Material material, string keyword, bool enabled)
-        {
-            if (material == null) return;
-            
-            if (enabled)
-                material.EnableKeyword(keyword);
-            else
-                material.DisableKeyword(keyword);
-        }
-        
-        private void ApplyPresetByIndex(Material material, MaterialEditor materialEditor, int index)
-        {
-            // Simplified preset application - in a full implementation, 
-            // this would use the proper preset system from GorgonizeToonPresetManager
-            
-            switch (index)
-            {
-                case 0: // Anime Classic
-                    ApplyAnimePreset(material);
-                    break;
-                case 1: // Cartoon Bold
-                    ApplyCartoonPreset(material);
-                    break;
-                case 2: // Sketch Style
-                    ApplySketchPreset(material);
-                    break;
-                case 3: // Comic Book
-                    ApplyComicPreset(material);
-                    break;
-                case 4: // Hatched Drawing
-                    ApplyHatchedPreset(material);
-                    break;
-                case 6: // Painterly
-                    ApplyPainterlyPreset(material);
-                    break;
-            }
-            
-            materialEditor.PropertiesChanged();
-        }
-        
-        private void ApplyAnimePreset(Material material)
-        {
-            // Anime style settings
-            if (baseColor != null) baseColor.colorValue = Color.white;
-            if (shadowThreshold != null) shadowThreshold.floatValue = 0.4f;
-            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.1f;
-            if (shadowColor != null) shadowColor.colorValue = new Color(0.8f, 0.8f, 0.9f, 1f);
-            if (shadowIntensity != null) shadowIntensity.floatValue = 0.7f;
-            
-            // Enable rim lighting
-            if (enableRimLighting != null) enableRimLighting.floatValue = 1f;
-            SetKeywordSafe(material, "_RIM_LIGHTING", true);
-            if (rimColor != null) rimColor.colorValue = new Color(1f, 0.95f, 0.8f, 1f);
-            if (rimPower != null) rimPower.floatValue = 1.5f;
-            if (rimIntensity != null) rimIntensity.floatValue = 2f;
-            
-            // Enable specular
-            if (enableSpecular != null) enableSpecular.floatValue = 1f;
-            SetKeywordSafe(material, "_SPECULAR", true);
-            if (specularSize != null) specularSize.floatValue = 0.05f;
-            if (specularIntensity != null) specularIntensity.floatValue = 2f;
-            
-            // Disable hatching
-            if (enableHatching != null) enableHatching.floatValue = 0f;
-            SetKeywordSafe(material, "_HATCHING", false);
-        }
-        
-        private void ApplyCartoonPreset(Material material)
-        {
-            // Cartoon style settings
-            if (baseColor != null) baseColor.colorValue = Color.white;
-            if (shadowThreshold != null) shadowThreshold.floatValue = 0.6f;
-            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.02f;
-            if (shadowColor != null) shadowColor.colorValue = new Color(0.6f, 0.6f, 0.8f, 1f);
-            if (shadowIntensity != null) shadowIntensity.floatValue = 0.9f;
-            
-            // Enable rim lighting
-            if (enableRimLighting != null) enableRimLighting.floatValue = 1f;
-            SetKeywordSafe(material, "_RIM_LIGHTING", true);
-            if (rimIntensity != null) rimIntensity.floatValue = 3f;
-            
-            // Enable outline
-            if (enableOutline != null) enableOutline.floatValue = 1f;
-            SetKeywordSafe(material, "_OUTLINE", true);
-            if (outlineColor != null) outlineColor.colorValue = Color.black;
-            if (outlineWidth != null) outlineWidth.floatValue = 0.02f;
-            
-            // Enable cel shading
-            if (enableCelShading != null) enableCelShading.floatValue = 1f;
-            SetKeywordSafe(material, "_CEL_SHADING", true);
-            if (celShadingSteps != null) celShadingSteps.floatValue = 4f;
-        }
-        
-        private void ApplySketchPreset(Material material)
-        {
-            // Sketch style settings
-            if (baseColor != null) baseColor.colorValue = Color.white;
-            if (shadowThreshold != null) shadowThreshold.floatValue = 0.4f;
-            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.05f;
-            if (shadowColor != null) shadowColor.colorValue = new Color(0.95f, 0.95f, 0.95f, 1f);
-            
-            // Enable hatching
-            if (enableHatching != null) enableHatching.floatValue = 1f;
-            SetKeywordSafe(material, "_HATCHING", true);
-            if (hatchingDensity != null) hatchingDensity.floatValue = 2f;
-            if (hatchingIntensity != null) hatchingIntensity.floatValue = 0.8f;
-            if (hatchingThreshold != null) hatchingThreshold.floatValue = 0.6f;
-            if (crossHatchingThreshold != null) crossHatchingThreshold.floatValue = 0.3f;
-            if (hatchingRotation != null) hatchingRotation.floatValue = 45f;
-            
-            // Minimal rim lighting
-            if (enableRimLighting != null) enableRimLighting.floatValue = 1f;
-            SetKeywordSafe(material, "_RIM_LIGHTING", true);
-            if (rimIntensity != null) rimIntensity.floatValue = 1f;
-            if (rimColor != null) rimColor.colorValue = new Color(0.8f, 0.8f, 0.8f, 1f);
-        }
-        
-        private void ApplyComicPreset(Material material)
-        {
-            // Comic book style
-            ApplyCartoonPreset(material); // Start with cartoon base
-            
-            // Enhance with posterization
-            if (enablePosterize != null) enablePosterize.floatValue = 1f;
-            SetKeywordSafe(material, "_POSTERIZE", true);
-            if (posterizeLevels != null) posterizeLevels.floatValue = 8f;
-            
-            // Enhanced contrast
-            if (contrast != null) contrast.floatValue = 1.4f;
-            if (saturation != null) saturation.floatValue = 1.3f;
-        }
-        
-        private void ApplyHatchedPreset(Material material)
-        {
-            ApplySketchPreset(material); // Start with sketch base
-            
-            // Enable screen space hatching
-            if (enableScreenSpaceHatching != null) enableScreenSpaceHatching.floatValue = 1f;
-            SetKeywordSafe(material, "_SCREEN_SPACE_HATCHING", true);
-            if (screenHatchScale != null) screenHatchScale.floatValue = 3f;
-            if (screenHatchBias != null) screenHatchBias.floatValue = 0.2f;
-        }
-        
-        private void ApplyRealisticPreset(Material material)
-        {
-            // Realistic toon settings
-            if (baseColor != null) baseColor.colorValue = Color.white;
-            if (shadowThreshold != null) shadowThreshold.floatValue = 0.3f;
-            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.2f;
-            if (shadowColor != null) shadowColor.colorValue = new Color(0.7f, 0.7f, 0.8f, 1f);
-            if (shadowIntensity != null) shadowIntensity.floatValue = 0.6f;
-            
-            // Enable subsurface scattering
-            if (enableSubsurface != null) enableSubsurface.floatValue = 1f;
-            SetKeywordSafe(material, "_SUBSURFACE", true);
-            if (subsurfaceColor != null) subsurfaceColor.colorValue = new Color(1f, 0.7f, 0.7f, 1f);
-            if (subsurfaceIntensity != null) subsurfaceIntensity.floatValue = 0.3f;
-            
-            // Enable fresnel
-            if (enableFresnel != null) enableFresnel.floatValue = 1f;
-            SetKeywordSafe(material, "_FRESNEL", true);
-            if (fresnelIntensity != null) fresnelIntensity.floatValue = 0.5f;
-            
-            // Boost indirect lighting
-            if (indirectLightingBoost != null) indirectLightingBoost.floatValue = 0.6f;
-        }
-        
-        private void ApplyPainterlyPreset(Material material)
-        {
-            // Painterly style
-            if (baseColor != null) baseColor.colorValue = Color.white;
-            if (shadowThreshold != null) shadowThreshold.floatValue = 0.35f;
-            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.3f;
-            if (shadowColor != null) shadowColor.colorValue = new Color(0.6f, 0.7f, 0.8f, 1f);
-            if (indirectLightingBoost != null) indirectLightingBoost.floatValue = 0.4f;
-            
-            // Enable matcap
-            if (enableMatcap != null) enableMatcap.floatValue = 1f;
-            SetKeywordSafe(material, "_MATCAP", true);
-            if (matcapIntensity != null) matcapIntensity.floatValue = 0.8f;
-            if (matcapBlendMode != null) matcapBlendMode.floatValue = 1f; // Multiply
-            
-            // Enable fresnel
-            if (enableFresnel != null) enableFresnel.floatValue = 1f;
-            SetKeywordSafe(material, "_FRESNEL", true);
-            if (fresnelIntensity != null) fresnelIntensity.floatValue = 1.5f;
-            if (fresnelPower != null) fresnelPower.floatValue = 2f;
-            
-            // Enable posterization
-            if (enablePosterize != null) enablePosterize.floatValue = 1f;
-            SetKeywordSafe(material, "_POSTERIZE", true);
-            if (posterizeLevels != null) posterizeLevels.floatValue = 6f;
-            
-            // Color adjustments
-            if (saturation != null) saturation.floatValue = 1.1f;
-            if (brightness != null) brightness.floatValue = 1.1f;
-        }
-        
-        private int CountActiveFeatures(Material material)
-        {
-            if (material == null) return 0;
-            
-            int count = 0;
-            if (material.IsKeywordEnabled("_RIM_LIGHTING")) count++;
-            if (material.IsKeywordEnabled("_SPECULAR")) count++;
-            if (material.IsKeywordEnabled("_HATCHING")) count++;
-            if (material.IsKeywordEnabled("_SCREEN_SPACE_HATCHING")) count++;
-            if (material.IsKeywordEnabled("_OUTLINE")) count++;
-            if (material.IsKeywordEnabled("_MATCAP")) count++;
-            if (material.IsKeywordEnabled("_NORMALMAP")) count++;
-            if (material.IsKeywordEnabled("_EMISSION")) count++;
-            if (material.IsKeywordEnabled("_FRESNEL")) count++;
-            if (material.IsKeywordEnabled("_SUBSURFACE")) count++;
-            if (material.IsKeywordEnabled("_POSTERIZE")) count++;
-            if (material.IsKeywordEnabled("_CEL_SHADING")) count++;
-            
-            return count;
-        }
-        
-        private float EstimatePerformanceCost(Material material)
-        {
-            if (material == null) return 0f;
-            
-            float cost = 0.1f; // Base toon shader cost
-            
-            if (material.IsKeywordEnabled("_RIM_LIGHTING")) cost += 0.1f;
-            if (material.IsKeywordEnabled("_SPECULAR")) cost += 0.15f;
-            if (material.IsKeywordEnabled("_HATCHING")) cost += 0.2f;
-            if (material.IsKeywordEnabled("_SCREEN_SPACE_HATCHING")) cost += 0.15f;
-            if (material.IsKeywordEnabled("_OUTLINE")) cost += 0.3f;
-            if (material.IsKeywordEnabled("_MATCAP")) cost += 0.2f;
-            if (material.IsKeywordEnabled("_NORMALMAP")) cost += 0.05f;
-            if (material.IsKeywordEnabled("_EMISSION")) cost += 0.05f;
-            if (material.IsKeywordEnabled("_FRESNEL")) cost += 0.1f;
-            if (material.IsKeywordEnabled("_SUBSURFACE")) cost += 0.25f;
-            if (material.IsKeywordEnabled("_POSTERIZE")) cost += 0.1f;
-            if (material.IsKeywordEnabled("_CEL_SHADING")) cost += 0.05f;
-            if (material.IsKeywordEnabled("_FORCE_FIELD")) cost += 0.15f;
-            if (material.IsKeywordEnabled("_HOLOGRAM")) cost += 0.1f;
-            if (material.IsKeywordEnabled("_DISSOLVE")) cost += 0.05f;
-            
-            return Mathf.Clamp01(cost);
-        }
-        
-        private string GetQualityRecommendation(float performanceCost)
-        {
-            if (performanceCost > 0.8f)
-                return "High performance cost detected. Consider reducing active features for mobile platforms.";
-            if (performanceCost > 0.6f)
-                return "Medium performance cost. Should work well on most platforms.";
-            if (performanceCost < 0.3f)
-                return "Low performance cost. Excellent for mobile and VR applications.";
-            
-            return "Good performance balance for desktop and console platforms.";
-        }
-        
-        #endregion
-        
-        #region GUI Helper Methods (Simplified versions of ToonGUIStyles)
-        
-        private GUIStyle CreateHeaderStyle()
-        {
-            return new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold,
-                fontSize = 18,
-                normal = { textColor = new Color(0.3f, 0.7f, 1f, 1f) },
-                wordWrap = true
-            };
-        }
-        
-        private GUIStyle CreateVersionStyle()
-        {
-            return new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Italic,
-                fontSize = 10,
-                normal = { textColor = Color.gray }
-            };
-        }
-        
-        private GUIStyle CreateBoldLabelStyle()
-        {
-            return new GUIStyle(GUI.skin.label)
-            {
-                fontStyle = FontStyle.Bold
-            };
-        }
-        
-        private GUIStyle CreateSmallLabelStyle()
-        {
-            return new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 10,
-                normal = { textColor = Color.gray }
-            };
-        }
-        
-        private bool DrawStyledFoldout(bool foldout, string content, string emoji = "")
-        {
-            var style = new GUIStyle(EditorStyles.foldout)
-            {
-                fontStyle = FontStyle.Bold,
-                fontSize = 12
-            };
-            
-            return EditorGUILayout.Foldout(foldout, $"{emoji} {content}", style);
-        }
-        
-        private bool DrawPresetButton(string text)
-        {
-            var style = new GUIStyle(GUI.skin.button)
-            {
-                fontSize = 11,
-                fontStyle = FontStyle.Bold,
-                fixedHeight = 25,
-                normal = { textColor = Color.white }
-            };
-            
-            return GUILayout.Button(text, style);
-        }
-        
-        private void BeginStyledBox()
-        {
-            var style = new GUIStyle(GUI.skin.box)
-            {
-                padding = new RectOffset(10, 10, 10, 10),
-                margin = new RectOffset(5, 5, 5, 5)
-            };
-            
-            EditorGUILayout.BeginVertical(style);
-        }
-        
-        private void EndStyledBox()
-        {
-            EditorGUILayout.EndVertical();
-        }
-        
-        private void BeginHorizontalLayout()
-        {
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Space(5);
-        }
-        
-        private void EndHorizontalLayout()
-        {
-            GUILayout.Space(5);
-            EditorGUILayout.EndHorizontal();
-        }
-        
-        private void DrawSeparator()
-        {
-            GUILayout.Space(5f);
-            var rect = GUILayoutUtility.GetRect(0, 1, GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(rect, Color.gray * 0.6f);
-            GUILayout.Space(5f);
-        }
-        
-        private void DrawInfoBox(string message, MessageType messageType)
-        {
-            EditorGUILayout.HelpBox(message, messageType);
-        }
-        
-        private void DrawFeatureCount(int activeCount, int totalCount)
-        {
-            var color = activeCount > totalCount * 0.7f ? new Color(1f, 0.7f, 0.2f, 1f) : new Color(0.2f, 0.8f, 0.4f, 1f);
-            var originalColor = GUI.contentColor;
-            GUI.contentColor = color;
-            EditorGUILayout.LabelField($"Active Features: {activeCount}/{totalCount}", CreateSmallLabelStyle());
-            GUI.contentColor = originalColor;
-        }
-        
-        private void DrawPerformanceBar(float value, string label)
-        {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(label, GUILayout.Width(80));
-            
-            var rect = GUILayoutUtility.GetRect(0, 16, GUILayout.ExpandWidth(true));
-            
-            // Background
-            EditorGUI.DrawRect(rect, Color.black * 0.3f);
-            
-            // Fill
-            var fillRect = new Rect(rect.x, rect.y, rect.width * value, rect.height);
-            Color fillColor = Color.green;
-            if (value > 0.6f) fillColor = Color.yellow;
-            if (value > 0.8f) fillColor = Color.red;
-            
-            EditorGUI.DrawRect(fillRect, fillColor);
-            
-            // Text
-            var textStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 10
-            };
-            EditorGUI.LabelField(rect, $"{value:P0}", textStyle);
-            
-            EditorGUILayout.EndHorizontal();
-        }
-        
-        #endregion
-    }
-}using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using System.IO;
 
@@ -1797,3 +704,1099 @@ namespace Gorgonize.ToonShader.Editor
                         materialEditor.RangeProperty(specularSmoothness, "Specular Smoothness");
                     if (specularIntensity != null)
                         materialEditor.RangeProperty(specularIntensity, "Specular Intensity");
+
+                    // Advanced specular options
+                    if (anisotropy != null)
+                    {
+                        materialEditor.RangeProperty(anisotropy, "Anisotropy");
+                        SetKeywordSafe(material, "_SPECULAR_ANISOTROPIC", Mathf.Abs(anisotropy.floatValue) > 0.001f);
+                    }
+                    
+                    if (specularSteps != null)
+                    {
+                        materialEditor.RangeProperty(specularSteps, "Specular Steps");
+                        SetKeywordSafe(material, "_SPECULAR_STEPPED", specularSteps.floatValue > 1);
+                    }
+                    
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawHatchingSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableHatching == null) return;
+            
+            showHatching = DrawStyledFoldout(showHatching, "Hatching Effects", "🖊️");
+            
+            if (showHatching)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableHatching, "Enable Hatching");
+                SetKeywordSafe(material, "_HATCHING", enableHatching.floatValue > 0);
+                
+                if (enableHatching.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    
+                    // Textures
+                    if (hatchingTex != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Primary Hatching", "Main hatching pattern"), hatchingTex);
+                    if (crossHatchingTex != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Cross Hatching", "Cross hatching for deeper shadows"), crossHatchingTex);
+                    if (hatchingTex2 != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Secondary Hatching", "Additional hatching layer"), hatchingTex2);
+                    
+                    EditorGUILayout.Space(3f);
+                    
+                    // Parameters
+                    if (hatchingDensity != null)
+                        materialEditor.RangeProperty(hatchingDensity, "Hatching Density");
+                    if (hatchingIntensity != null)
+                        materialEditor.RangeProperty(hatchingIntensity, "Hatching Intensity");
+                    if (hatchingThreshold != null)
+                        materialEditor.RangeProperty(hatchingThreshold, "Primary Threshold");
+                    if (crossHatchingThreshold != null)
+                        materialEditor.RangeProperty(crossHatchingThreshold, "Cross Hatch Threshold");
+                    if (secondaryHatchingThreshold != null)
+                        materialEditor.RangeProperty(secondaryHatchingThreshold, "Secondary Threshold");
+                    if (hatchingRotation != null)
+                        materialEditor.RangeProperty(hatchingRotation, "Hatching Rotation");
+                    
+                    // Animation
+                    if (hatchingAnimSpeed != null)
+                    {
+                        materialEditor.RangeProperty(hatchingAnimSpeed, "Animation Speed");
+                        SetKeywordSafe(material, "_HATCHING_ANIMATED", hatchingAnimSpeed.floatValue > 0.001f);
+                    }
+                    
+                    EditorGUILayout.Space(5f);
+                    
+                    // Screen space hatching
+                    if (enableScreenSpaceHatching != null)
+                    {
+                        materialEditor.ShaderProperty(enableScreenSpaceHatching, "Enable Screen Space Hatching");
+                        SetKeywordSafe(material, "_SCREEN_SPACE_HATCHING", enableScreenSpaceHatching.floatValue > 0);
+                        
+                        if (enableScreenSpaceHatching.floatValue > 0)
+                        {
+                            EditorGUI.indentLevel++;
+                            if (screenHatchScale != null)
+                                materialEditor.RangeProperty(screenHatchScale, "Screen Hatch Scale");
+                            if (screenHatchBias != null)
+                                materialEditor.RangeProperty(screenHatchBias, "Screen Hatch Bias");
+                            EditorGUI.indentLevel--;
+                        }
+                    }
+                    
+                    EditorGUI.indentLevel--;
+                }
+                
+                DrawInfoBox("Hatching adds sketch-like crosshatch patterns based on lighting. Lower thresholds = more hatching in dark areas.", MessageType.Info);
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawMatcapSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableMatcap == null) return;
+            
+            showMatcap = DrawStyledFoldout(showMatcap, "Matcap", "🎭");
+            
+            if (showMatcap)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableMatcap, "Enable Matcap");
+                SetKeywordSafe(material, "_MATCAP", enableMatcap.floatValue > 0);
+                
+                if (enableMatcap.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    if (matcapTex != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Matcap Texture"), matcapTex);
+                    if (matcapIntensity != null)
+                        materialEditor.RangeProperty(matcapIntensity, "Matcap Intensity");
+                    
+                    if (matcapBlendMode != null)
+                    {
+                        string[] blendModes = {"Add", "Multiply", "Screen", "Overlay"};
+                        int blendMode = (int)matcapBlendMode.floatValue;
+                        blendMode = EditorGUILayout.Popup("Blend Mode", blendMode, blendModes);
+                        matcapBlendMode.floatValue = blendMode;
+                    }
+                    
+                    if (matcapRotation != null)
+                        materialEditor.RangeProperty(matcapRotation, "Matcap Rotation");
+                    
+                    SetKeywordSafe(material, "_MATCAP_PERSPECTIVE_CORRECTION", true);
+                    
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawNormalMapSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableNormalMap == null) return;
+            
+            showNormalMap = DrawStyledFoldout(showNormalMap, "Normal Mapping", "🗺️");
+            
+            if (showNormalMap)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableNormalMap, "Enable Normal Map");
+                SetKeywordSafe(material, "_NORMALMAP", enableNormalMap.floatValue > 0);
+                
+                if (enableNormalMap.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    if (bumpMap != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Normal Map"), bumpMap);
+                    if (bumpScale != null && bumpMap?.textureValue != null)
+                        materialEditor.RangeProperty(bumpScale, "Normal Scale");
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawDetailSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableDetail == null) return;
+            
+            showDetail = DrawStyledFoldout(showDetail, "Detail Mapping", "🔍");
+            
+            if (showDetail)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableDetail, "Enable Detail");
+                SetKeywordSafe(material, "_DETAIL", enableDetail.floatValue > 0);
+                
+                if (enableDetail.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    if (detailMap != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Detail Albedo"), detailMap);
+                    if (detailNormalMap != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Detail Normal"), detailNormalMap);
+                    if (detailScale != null)
+                        materialEditor.RangeProperty(detailScale, "Detail Scale");
+                    if (detailNormalScale != null)
+                        materialEditor.RangeProperty(detailNormalScale, "Detail Normal Scale");
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawEmissionSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableEmission == null) return;
+            
+            showEmission = DrawStyledFoldout(showEmission, "Emission", "🔥");
+            
+            if (showEmission)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableEmission, "Enable Emission");
+                SetKeywordSafe(material, "_EMISSION", enableEmission.floatValue > 0);
+                
+                if (enableEmission.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    if (emissionMap != null && emissionColor != null)
+                        materialEditor.TexturePropertyWithHDRColor(new GUIContent("Emission"), emissionMap, emissionColor, false);
+                    else if (emissionColor != null)
+                        materialEditor.ColorProperty(emissionColor, "Emission Color");
+                    
+                    if (emissionIntensity != null)
+                        materialEditor.RangeProperty(emissionIntensity, "Emission Intensity");
+                    
+                    if (emissionScrollSpeed != null)
+                        materialEditor.VectorProperty(emissionScrollSpeed, "Scroll Speed (X,Y)");
+                    
+                    // Pulsing emission
+                    if (emissionPulseSpeed != null && emissionPulseIntensity != null)
+                    {
+                        EditorGUILayout.LabelField("Pulsing Emission", EditorStyles.boldLabel);
+                        materialEditor.RangeProperty(emissionPulseSpeed, "Pulse Speed");
+                        materialEditor.RangeProperty(emissionPulseIntensity, "Pulse Intensity");
+                        SetKeywordSafe(material, "_EMISSION_PULSING", emissionPulseSpeed.floatValue > 0.001f);
+                    }
+                    
+                    // Temperature-based emission
+                    if (emissionTemperature != null)
+                    {
+                        materialEditor.RangeProperty(emissionTemperature, "Temperature (K)");
+                        SetKeywordSafe(material, "_EMISSION_TEMPERATURE_BASED", emissionTemperature.floatValue != 6500f);
+                    }
+                    
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawFresnelSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableFresnel == null) return;
+            
+            showFresnel = DrawStyledFoldout(showFresnel, "Fresnel Effect", "🌀");
+            
+            if (showFresnel)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableFresnel, "Enable Fresnel");
+                SetKeywordSafe(material, "_FRESNEL", enableFresnel.floatValue > 0);
+                
+                if (enableFresnel.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    if (fresnelColor != null)
+                        materialEditor.ColorProperty(fresnelColor, "Fresnel Color");
+                    if (fresnelPower != null)
+                        materialEditor.RangeProperty(fresnelPower, "Fresnel Power");
+                    if (fresnelIntensity != null)
+                        materialEditor.RangeProperty(fresnelIntensity, "Fresnel Intensity");
+                    
+                    // Iridescence
+                    if (iridescenceIntensity != null)
+                    {
+                        materialEditor.RangeProperty(iridescenceIntensity, "Iridescence Intensity");
+                        SetKeywordSafe(material, "_FRESNEL_IRIDESCENCE", iridescenceIntensity.floatValue > 0.001f);
+                    }
+                    
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawSubsurfaceSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableSubsurface == null) return;
+            
+            showSubsurface = DrawStyledFoldout(showSubsurface, "Subsurface Scattering", "🌸");
+            
+            if (showSubsurface)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableSubsurface, "Enable Subsurface");
+                SetKeywordSafe(material, "_SUBSURFACE", enableSubsurface.floatValue > 0);
+                
+                if (enableSubsurface.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    if (subsurfaceColor != null)
+                        materialEditor.ColorProperty(subsurfaceColor, "Subsurface Color");
+                    if (subsurfacePower != null)
+                        materialEditor.RangeProperty(subsurfacePower, "Subsurface Power");
+                    if (subsurfaceIntensity != null)
+                        materialEditor.RangeProperty(subsurfaceIntensity, "Subsurface Intensity");
+                    if (subsurfaceDistortion != null)
+                        materialEditor.RangeProperty(subsurfaceDistortion, "Subsurface Distortion");
+                    if (subsurfaceThickness != null)
+                        materialEditor.TexturePropertySingleLine(new GUIContent("Thickness Map"), subsurfaceThickness);
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawOutlineSection(MaterialEditor materialEditor, Material material)
+        {
+            if (enableOutline == null) return;
+            
+            showOutline = DrawStyledFoldout(showOutline, "Outline", "🖼️");
+            
+            if (showOutline)
+            {
+                BeginStyledBox();
+                
+                materialEditor.ShaderProperty(enableOutline, "Enable Outline");
+                SetKeywordSafe(material, "_OUTLINE", enableOutline.floatValue > 0);
+                
+                if (enableOutline.floatValue > 0)
+                {
+                    EditorGUI.indentLevel++;
+                    if (outlineColor != null)
+                        materialEditor.ColorProperty(outlineColor, "Outline Color");
+                    if (outlineWidth != null)
+                        materialEditor.RangeProperty(outlineWidth, "Outline Width");
+                    
+                    if (outlineMode != null)
+                    {
+                        string[] outlineModes = {"Normal", "Position", "Clip"};
+                        int mode = (int)outlineMode.floatValue;
+                        mode = EditorGUILayout.Popup("Outline Mode", mode, outlineModes);
+                        outlineMode.floatValue = mode;
+                    }
+                    
+                    if (outlineFadeDistance != null)
+                    {
+                        materialEditor.RangeProperty(outlineFadeDistance, "Fade Distance");
+                        SetKeywordSafe(material, "_OUTLINE_DISTANCE_FADE", outlineFadeDistance.floatValue > 0.001f);
+                    }
+                    
+                    if (outlineDepthBiasValue != null)
+                    {
+                        materialEditor.RangeProperty(outlineDepthBiasValue, "Depth Bias Value");
+                        SetKeywordSafe(material, "_OUTLINE_DEPTH_BIAS", outlineDepthBiasValue.floatValue > 0.001f);
+                    }
+                    
+                    EditorGUI.indentLevel--;
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawStylizationSection(MaterialEditor materialEditor, Material material)
+        {
+            showColorGrading = DrawStyledFoldout(showColorGrading, "Color Grading", "🎨");
+            
+            if (showColorGrading)
+            {
+                BeginStyledBox();
+                
+                if (hue != null)
+                    materialEditor.RangeProperty(hue, "Hue Shift");
+                if (contrast != null)
+                    materialEditor.RangeProperty(contrast, "Contrast");
+                if (gamma != null)
+                    materialEditor.RangeProperty(gamma, "Gamma");
+                if (colorTemperature != null)
+                    materialEditor.RangeProperty(colorTemperature, "Color Temperature");
+                if (colorTint != null)
+                    materialEditor.RangeProperty(colorTint, "Color Tint");
+                if (vibrance != null)
+                    materialEditor.RangeProperty(vibrance, "Vibrance");
+                
+                EndStyledBox();
+            }
+            
+            showStylization = DrawStyledFoldout(showStylization, "Stylization", "🎭");
+            
+            if (showStylization)
+            {
+                BeginStyledBox();
+                
+                // Posterization
+                if (enablePosterize != null)
+                {
+                    materialEditor.ShaderProperty(enablePosterize, "Enable Posterize");
+                    SetKeywordSafe(material, "_POSTERIZE", enablePosterize.floatValue > 0);
+                    
+                    if (enablePosterize.floatValue > 0 && posterizeLevels != null)
+                    {
+                        EditorGUI.indentLevel++;
+                        materialEditor.RangeProperty(posterizeLevels, "Posterize Levels");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                // Cel Shading
+                if (enableCelShading != null)
+                {
+                    materialEditor.ShaderProperty(enableCelShading, "Enable Cel Shading");
+                    SetKeywordSafe(material, "_CEL_SHADING", enableCelShading.floatValue > 0);
+                    
+                    if (enableCelShading.floatValue > 0 && celShadingSteps != null)
+                    {
+                        EditorGUI.indentLevel++;
+                        materialEditor.RangeProperty(celShadingSteps, "Cel Shading Steps");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                // Dithering
+                if (enableDithering != null)
+                {
+                    materialEditor.ShaderProperty(enableDithering, "Enable Dithering");
+                    SetKeywordSafe(material, "_DITHERING", enableDithering.floatValue > 0);
+                    
+                    if (enableDithering.floatValue > 0 && ditheringIntensity != null)
+                    {
+                        EditorGUI.indentLevel++;
+                        materialEditor.RangeProperty(ditheringIntensity, "Dithering Intensity");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawAdvancedEffectsSection(MaterialEditor materialEditor, Material material)
+        {
+            showAdvancedEffects = DrawStyledFoldout(showAdvancedEffects, "Advanced Effects", "✨");
+            
+            if (showAdvancedEffects)
+            {
+                // Force Field Effect
+                BeginStyledBox();
+                EditorGUILayout.LabelField("Force Field Effect", CreateBoldLabelStyle());
+                
+                if (enableForceField != null)
+                {
+                    materialEditor.ShaderProperty(enableForceField, "Enable Force Field");
+                    SetKeywordSafe(material, "_FORCE_FIELD", enableForceField.floatValue > 0);
+                    
+                    if (enableForceField.floatValue > 0)
+                    {
+                        EditorGUI.indentLevel++;
+                        if (forceFieldColor != null)
+                            materialEditor.ColorProperty(forceFieldColor, "Force Field Color");
+                        if (forceFieldIntensity != null)
+                            materialEditor.RangeProperty(forceFieldIntensity, "Force Field Intensity");
+                        if (forceFieldFrequency != null)
+                            materialEditor.RangeProperty(forceFieldFrequency, "Force Field Frequency");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                EndStyledBox();
+                
+                // Hologram Effect
+                BeginStyledBox();
+                EditorGUILayout.LabelField("Hologram Effect", CreateBoldLabelStyle());
+                
+                if (enableHologram != null)
+                {
+                    materialEditor.ShaderProperty(enableHologram, "Enable Hologram");
+                    SetKeywordSafe(material, "_HOLOGRAM", enableHologram.floatValue > 0);
+                    
+                    if (enableHologram.floatValue > 0)
+                    {
+                        EditorGUI.indentLevel++;
+                        if (hologramIntensity != null)
+                            materialEditor.RangeProperty(hologramIntensity, "Hologram Intensity");
+                        if (hologramFlicker != null)
+                            materialEditor.RangeProperty(hologramFlicker, "Hologram Flicker");
+                        if (hologramScanlines != null)
+                            materialEditor.RangeProperty(hologramScanlines, "Hologram Scanlines");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                EndStyledBox();
+                
+                // Dissolve Effect
+                BeginStyledBox();
+                EditorGUILayout.LabelField("Dissolve Effect", CreateBoldLabelStyle());
+                
+                if (enableDissolve != null)
+                {
+                    materialEditor.ShaderProperty(enableDissolve, "Enable Dissolve");
+                    SetKeywordSafe(material, "_DISSOLVE", enableDissolve.floatValue > 0);
+                    
+                    if (enableDissolve.floatValue > 0)
+                    {
+                        EditorGUI.indentLevel++;
+                        if (dissolveNoise != null)
+                            materialEditor.TexturePropertySingleLine(new GUIContent("Dissolve Noise"), dissolveNoise);
+                        if (dissolveAmount != null)
+                            materialEditor.RangeProperty(dissolveAmount, "Dissolve Amount");
+                        if (dissolveEdgeWidth != null)
+                            materialEditor.RangeProperty(dissolveEdgeWidth, "Dissolve Edge Width");
+                        if (dissolveEdgeColor != null)
+                            materialEditor.ColorProperty(dissolveEdgeColor, "Dissolve Edge Color");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawAnimationSection(MaterialEditor materialEditor, Material material)
+        {
+            showAnimation = DrawStyledFoldout(showAnimation, "Animation System", "🎬");
+            
+            if (showAnimation)
+            {
+                BeginStyledBox();
+                
+                if (enableAnimatedProperties != null)
+                {
+                    materialEditor.ShaderProperty(enableAnimatedProperties, "Enable Animations");
+                    SetKeywordSafe(material, "_ANIMATED_PROPERTIES", enableAnimatedProperties.floatValue > 0);
+                    
+                    if (enableAnimatedProperties.floatValue > 0 && animationSpeed != null)
+                    {
+                        EditorGUI.indentLevel++;
+                        materialEditor.RangeProperty(animationSpeed, "Global Animation Speed");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                if (enableVertexAnimation != null)
+                {
+                    materialEditor.ShaderProperty(enableVertexAnimation, "Enable Vertex Animation");
+                    SetKeywordSafe(material, "_VERTEX_ANIMATION", enableVertexAnimation.floatValue > 0);
+                    
+                    if (enableVertexAnimation.floatValue > 0)
+                    {
+                        EditorGUI.indentLevel++;
+                        if (vertexAnimationIntensity != null)
+                            materialEditor.RangeProperty(vertexAnimationIntensity, "Vertex Animation Intensity");
+                        if (vertexAnimationFrequency != null)
+                            materialEditor.RangeProperty(vertexAnimationFrequency, "Vertex Animation Frequency");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawPerformancePropertiesSection(MaterialEditor materialEditor, Material material)
+        {
+            showPerformance = DrawStyledFoldout(showPerformance, "Performance & Quality", "⚡");
+            
+            if (showPerformance)
+            {
+                BeginStyledBox();
+                
+                if (qualityLevel != null)
+                {
+                    string[] qualityNames = { "Low", "Medium", "High", "Ultra" };
+                    int quality = (int)qualityLevel.floatValue;
+                    quality = EditorGUILayout.Popup("Quality Level", quality, qualityNames);
+                    qualityLevel.floatValue = quality;
+                }
+                
+                if (enableLODFade != null)
+                {
+                    materialEditor.ShaderProperty(enableLODFade, "Enable LOD Fade");
+                    SetKeywordSafe(material, "_LOD_FADE", enableLODFade.floatValue > 0);
+                    
+                    if (enableLODFade.floatValue > 0 && lodFadeDistance != null)
+                    {
+                        EditorGUI.indentLevel++;
+                        materialEditor.RangeProperty(lodFadeDistance, "LOD Fade Distance");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                if (enableInstancing != null)
+                {
+                    materialEditor.ShaderProperty(enableInstancing, "GPU Instancing");
+                    SetKeywordSafe(material, "_INSTANCING_SUPPORT", enableInstancing.floatValue > 0);
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawAdvancedSection(MaterialEditor materialEditor, Material material)
+        {
+            showAdvanced = DrawStyledFoldout(showAdvanced, "Advanced Rendering", "⚙️");
+            
+            if (showAdvanced)
+            {
+                BeginStyledBox();
+                
+                if (cutoff != null)
+                    materialEditor.RangeProperty(cutoff, "Alpha Cutoff");
+                if (cull != null)
+                    materialEditor.ShaderProperty(cull, "Cull Mode");
+                if (zwrite != null)
+                    materialEditor.ShaderProperty(zwrite, "Z Write");
+                if (ztest != null)
+                    materialEditor.ShaderProperty(ztest, "Z Test");
+                if (srcBlend != null)
+                    materialEditor.ShaderProperty(srcBlend, "Src Blend");
+                if (dstBlend != null)
+                    materialEditor.ShaderProperty(dstBlend, "Dst Blend");
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawDebugSection(MaterialEditor materialEditor, Material material)
+        {
+            showDebug = DrawStyledFoldout(showDebug, "Debug & Visualization", "🔍");
+            
+            if (showDebug)
+            {
+                BeginStyledBox();
+                
+                if (debugMode != null)
+                {
+                    materialEditor.ShaderProperty(debugMode, "Debug Mode");
+                    SetKeywordSafe(material, "_DEBUG_MODE", debugMode.floatValue > 0);
+                    
+                    if (debugMode.floatValue > 0 && debugView != null)
+                    {
+                        EditorGUI.indentLevel++;
+                        string[] debugViews = {"None", "Normals", "Lighting", "Shadows", "Hatching"};
+                        int view = (int)debugView.floatValue;
+                        view = EditorGUILayout.Popup("Debug View", view, debugViews);
+                        debugView.floatValue = view;
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                if (showWireframe != null)
+                {
+                    materialEditor.ShaderProperty(showWireframe, "Show Wireframe");
+                    SetKeywordSafe(material, "_WIREFRAME", showWireframe.floatValue > 0);
+                    
+                    if (showWireframe.floatValue > 0)
+                    {
+                        EditorGUI.indentLevel++;
+                        if (wireframeColor != null)
+                            materialEditor.ColorProperty(wireframeColor, "Wireframe Color");
+                        if (wireframeThickness != null)
+                            materialEditor.RangeProperty(wireframeThickness, "Wireframe Thickness");
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                
+                EndStyledBox();
+            }
+        }
+        
+        private void DrawFooter()
+        {
+            BeginStyledBox();
+            EditorGUILayout.LabelField("Shader Information", CreateBoldLabelStyle());
+            
+            BeginHorizontalLayout();
+            EditorGUILayout.LabelField("Unity 6 URP Compatible", CreateSmallLabelStyle());
+            EditorGUILayout.LabelField("Mobile Optimized", CreateSmallLabelStyle());
+            EndHorizontalLayout();
+            
+            BeginHorizontalLayout();
+            EditorGUILayout.LabelField("Advanced NPR Features", CreateSmallLabelStyle());
+            EditorGUILayout.LabelField("AAA Quality Rendering", CreateSmallLabelStyle());
+            EndHorizontalLayout();
+            
+            EditorGUILayout.Space(5f);
+            DrawInfoBox("Use the preset buttons for quick setup, then fine-tune individual properties below!", MessageType.Info);
+            EndStyledBox();
+        }
+        
+        #region Utility Methods
+        
+        private void SetKeywordSafe(Material material, string keyword, bool enabled)
+        {
+            if (material == null) return;
+            
+            if (enabled)
+                material.EnableKeyword(keyword);
+            else
+                material.DisableKeyword(keyword);
+        }
+        
+        private void ApplyPresetByIndex(Material material, MaterialEditor materialEditor, int index)
+        {
+            // Apply preset settings based on index
+            switch (index)
+            {
+                case 0: // Anime Classic
+                    ApplyAnimePreset(material);
+                    break;
+                case 1: // Cartoon Bold
+                    ApplyCartoonPreset(material);
+                    break;
+                case 2: // Sketch Style
+                    ApplySketchPreset(material);
+                    break;
+                case 3: // Comic Book
+                    ApplyComicPreset(material);
+                    break;
+                case 4: // Hatched Drawing
+                    ApplyHatchedPreset(material);
+                    break;
+                case 5: // Realistic Toon
+                    ApplyRealisticPreset(material);
+                    break;
+                case 6: // Painterly
+                    ApplyPainterlyPreset(material);
+                    break;
+            }
+            
+            materialEditor.PropertiesChanged();
+        }
+        
+        private void ApplyAnimePreset(Material material)
+        {
+            // Anime style settings
+            if (baseColor != null) baseColor.colorValue = Color.white;
+            if (shadowThreshold != null) shadowThreshold.floatValue = 0.4f;
+            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.1f;
+            if (shadowColor != null) shadowColor.colorValue = new Color(0.8f, 0.8f, 0.9f, 1f);
+            if (shadowIntensity != null) shadowIntensity.floatValue = 0.7f;
+            
+            // Enable rim lighting
+            if (enableRimLighting != null) enableRimLighting.floatValue = 1f;
+            SetKeywordSafe(material, "_RIM_LIGHTING", true);
+            if (rimColor != null) rimColor.colorValue = new Color(1f, 0.95f, 0.8f, 1f);
+            if (rimPower != null) rimPower.floatValue = 1.5f;
+            if (rimIntensity != null) rimIntensity.floatValue = 2f;
+            
+            // Enable specular
+            if (enableSpecular != null) enableSpecular.floatValue = 1f;
+            SetKeywordSafe(material, "_SPECULAR", true);
+            if (specularSize != null) specularSize.floatValue = 0.05f;
+            if (specularIntensity != null) specularIntensity.floatValue = 2f;
+            
+            // Disable hatching
+            if (enableHatching != null) enableHatching.floatValue = 0f;
+            SetKeywordSafe(material, "_HATCHING", false);
+        }
+        
+        private void ApplyCartoonPreset(Material material)
+        {
+            // Cartoon style settings
+            if (baseColor != null) baseColor.colorValue = Color.white;
+            if (shadowThreshold != null) shadowThreshold.floatValue = 0.6f;
+            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.02f;
+            if (shadowColor != null) shadowColor.colorValue = new Color(0.6f, 0.6f, 0.8f, 1f);
+            if (shadowIntensity != null) shadowIntensity.floatValue = 0.9f;
+            
+            // Enable rim lighting
+            if (enableRimLighting != null) enableRimLighting.floatValue = 1f;
+            SetKeywordSafe(material, "_RIM_LIGHTING", true);
+            if (rimIntensity != null) rimIntensity.floatValue = 3f;
+            
+            // Enable outline
+            if (enableOutline != null) enableOutline.floatValue = 1f;
+            SetKeywordSafe(material, "_OUTLINE", true);
+            if (outlineColor != null) outlineColor.colorValue = Color.black;
+            if (outlineWidth != null) outlineWidth.floatValue = 0.02f;
+            
+            // Enable cel shading
+            if (enableCelShading != null) enableCelShading.floatValue = 1f;
+            SetKeywordSafe(material, "_CEL_SHADING", true);
+            if (celShadingSteps != null) celShadingSteps.floatValue = 4f;
+        }
+        
+        private void ApplySketchPreset(Material material)
+        {
+            // Sketch style settings
+            if (baseColor != null) baseColor.colorValue = Color.white;
+            if (shadowThreshold != null) shadowThreshold.floatValue = 0.4f;
+            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.05f;
+            if (shadowColor != null) shadowColor.colorValue = new Color(0.95f, 0.95f, 0.95f, 1f);
+            
+            // Enable hatching
+            if (enableHatching != null) enableHatching.floatValue = 1f;
+            SetKeywordSafe(material, "_HATCHING", true);
+            if (hatchingDensity != null) hatchingDensity.floatValue = 2f;
+            if (hatchingIntensity != null) hatchingIntensity.floatValue = 0.8f;
+            if (hatchingThreshold != null) hatchingThreshold.floatValue = 0.6f;
+            if (crossHatchingThreshold != null) crossHatchingThreshold.floatValue = 0.3f;
+            if (hatchingRotation != null) hatchingRotation.floatValue = 45f;
+            
+            // Minimal rim lighting
+            if (enableRimLighting != null) enableRimLighting.floatValue = 1f;
+            SetKeywordSafe(material, "_RIM_LIGHTING", true);
+            if (rimIntensity != null) rimIntensity.floatValue = 1f;
+            if (rimColor != null) rimColor.colorValue = new Color(0.8f, 0.8f, 0.8f, 1f);
+        }
+        
+        private void ApplyComicPreset(Material material)
+        {
+            // Comic book style
+            ApplyCartoonPreset(material); // Start with cartoon base
+            
+            // Enhance with posterization
+            if (enablePosterize != null) enablePosterize.floatValue = 1f;
+            SetKeywordSafe(material, "_POSTERIZE", true);
+            if (posterizeLevels != null) posterizeLevels.floatValue = 8f;
+            
+            // Enhanced contrast
+            if (contrast != null) contrast.floatValue = 1.4f;
+            if (saturation != null) saturation.floatValue = 1.3f;
+        }
+        
+        private void ApplyHatchedPreset(Material material)
+        {
+            ApplySketchPreset(material); // Start with sketch base
+            
+            // Enable screen space hatching
+            if (enableScreenSpaceHatching != null) enableScreenSpaceHatching.floatValue = 1f;
+            SetKeywordSafe(material, "_SCREEN_SPACE_HATCHING", true);
+            if (screenHatchScale != null) screenHatchScale.floatValue = 3f;
+            if (screenHatchBias != null) screenHatchBias.floatValue = 0.2f;
+        }
+        
+        private void ApplyRealisticPreset(Material material)
+        {
+            // Realistic toon settings
+            if (baseColor != null) baseColor.colorValue = Color.white;
+            if (shadowThreshold != null) shadowThreshold.floatValue = 0.3f;
+            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.2f;
+            if (shadowColor != null) shadowColor.colorValue = new Color(0.7f, 0.7f, 0.8f, 1f);
+            if (shadowIntensity != null) shadowIntensity.floatValue = 0.6f;
+            
+            // Enable subsurface scattering
+            if (enableSubsurface != null) enableSubsurface.floatValue = 1f;
+            SetKeywordSafe(material, "_SUBSURFACE", true);
+            if (subsurfaceColor != null) subsurfaceColor.colorValue = new Color(1f, 0.7f, 0.7f, 1f);
+            if (subsurfaceIntensity != null) subsurfaceIntensity.floatValue = 0.3f;
+            
+            // Enable fresnel
+            if (enableFresnel != null) enableFresnel.floatValue = 1f;
+            SetKeywordSafe(material, "_FRESNEL", true);
+            if (fresnelIntensity != null) fresnelIntensity.floatValue = 0.5f;
+            
+            // Boost indirect lighting
+            if (indirectLightingBoost != null) indirectLightingBoost.floatValue = 0.6f;
+        }
+        
+        private void ApplyPainterlyPreset(Material material)
+        {
+            // Painterly style
+            if (baseColor != null) baseColor.colorValue = Color.white;
+            if (shadowThreshold != null) shadowThreshold.floatValue = 0.35f;
+            if (shadowSmoothness != null) shadowSmoothness.floatValue = 0.3f;
+            if (shadowColor != null) shadowColor.colorValue = new Color(0.6f, 0.7f, 0.8f, 1f);
+            if (indirectLightingBoost != null) indirectLightingBoost.floatValue = 0.4f;
+            
+            // Enable matcap
+            if (enableMatcap != null) enableMatcap.floatValue = 1f;
+            SetKeywordSafe(material, "_MATCAP", true);
+            if (matcapIntensity != null) matcapIntensity.floatValue = 0.8f;
+            if (matcapBlendMode != null) matcapBlendMode.floatValue = 1f; // Multiply
+            
+            // Enable fresnel
+            if (enableFresnel != null) enableFresnel.floatValue = 1f;
+            SetKeywordSafe(material, "_FRESNEL", true);
+            if (fresnelIntensity != null) fresnelIntensity.floatValue = 1.5f;
+            if (fresnelPower != null) fresnelPower.floatValue = 2f;
+            
+            // Enable posterization
+            if (enablePosterize != null) enablePosterize.floatValue = 1f;
+            SetKeywordSafe(material, "_POSTERIZE", true);
+            if (posterizeLevels != null) posterizeLevels.floatValue = 6f;
+            
+            // Color adjustments
+            if (saturation != null) saturation.floatValue = 1.1f;
+            if (brightness != null) brightness.floatValue = 1.1f;
+        }
+        
+        private int CountActiveFeatures(Material material)
+        {
+            if (material == null) return 0;
+            
+            int count = 0;
+            if (material.IsKeywordEnabled("_RIM_LIGHTING")) count++;
+            if (material.IsKeywordEnabled("_SPECULAR")) count++;
+            if (material.IsKeywordEnabled("_HATCHING")) count++;
+            if (material.IsKeywordEnabled("_SCREEN_SPACE_HATCHING")) count++;
+            if (material.IsKeywordEnabled("_OUTLINE")) count++;
+            if (material.IsKeywordEnabled("_MATCAP")) count++;
+            if (material.IsKeywordEnabled("_NORMALMAP")) count++;
+            if (material.IsKeywordEnabled("_EMISSION")) count++;
+            if (material.IsKeywordEnabled("_FRESNEL")) count++;
+            if (material.IsKeywordEnabled("_SUBSURFACE")) count++;
+            if (material.IsKeywordEnabled("_POSTERIZE")) count++;
+            if (material.IsKeywordEnabled("_CEL_SHADING")) count++;
+            
+            return count;
+        }
+        
+        private float EstimatePerformanceCost(Material material)
+        {
+            if (material == null) return 0f;
+            
+            float cost = 0.1f; // Base toon shader cost
+            
+            if (material.IsKeywordEnabled("_RIM_LIGHTING")) cost += 0.1f;
+            if (material.IsKeywordEnabled("_SPECULAR")) cost += 0.15f;
+            if (material.IsKeywordEnabled("_HATCHING")) cost += 0.2f;
+            if (material.IsKeywordEnabled("_SCREEN_SPACE_HATCHING")) cost += 0.15f;
+            if (material.IsKeywordEnabled("_OUTLINE")) cost += 0.3f;
+            if (material.IsKeywordEnabled("_MATCAP")) cost += 0.2f;
+            if (material.IsKeywordEnabled("_NORMALMAP")) cost += 0.05f;
+            if (material.IsKeywordEnabled("_EMISSION")) cost += 0.05f;
+            if (material.IsKeywordEnabled("_FRESNEL")) cost += 0.1f;
+            if (material.IsKeywordEnabled("_SUBSURFACE")) cost += 0.25f;
+            if (material.IsKeywordEnabled("_POSTERIZE")) cost += 0.1f;
+            if (material.IsKeywordEnabled("_CEL_SHADING")) cost += 0.05f;
+            if (material.IsKeywordEnabled("_FORCE_FIELD")) cost += 0.15f;
+            if (material.IsKeywordEnabled("_HOLOGRAM")) cost += 0.1f;
+            if (material.IsKeywordEnabled("_DISSOLVE")) cost += 0.05f;
+            
+            return Mathf.Clamp01(cost);
+        }
+        
+        private string GetQualityRecommendation(float performanceCost)
+        {
+            if (performanceCost > 0.8f)
+                return "High performance cost detected. Consider reducing active features for mobile platforms.";
+            if (performanceCost > 0.6f)
+                return "Medium performance cost. Should work well on most platforms.";
+            if (performanceCost < 0.3f)
+                return "Low performance cost. Excellent for mobile and VR applications.";
+            
+            return "Good performance balance for desktop and console platforms.";
+        }
+        
+        #endregion
+        
+        #region GUI Helper Methods (Simplified versions of ToonGUIStyles)
+        
+        private GUIStyle CreateHeaderStyle()
+        {
+            return new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold,
+                fontSize = 18,
+                normal = { textColor = new Color(0.3f, 0.7f, 1f, 1f) },
+                wordWrap = true
+            };
+        }
+        
+        private GUIStyle CreateVersionStyle()
+        {
+            return new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Italic,
+                fontSize = 10,
+                normal = { textColor = Color.gray }
+            };
+        }
+        
+        private GUIStyle CreateBoldLabelStyle()
+        {
+            return new GUIStyle(GUI.skin.label)
+            {
+                fontStyle = FontStyle.Bold
+            };
+        }
+        
+        private GUIStyle CreateSmallLabelStyle()
+        {
+            return new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 10,
+                normal = { textColor = Color.gray }
+            };
+        }
+        
+        private bool DrawStyledFoldout(bool foldout, string content, string emoji = "")
+        {
+            var style = new GUIStyle(EditorStyles.foldout)
+            {
+                fontStyle = FontStyle.Bold,
+                fontSize = 12
+            };
+            
+            return EditorGUILayout.Foldout(foldout, $"{emoji} {content}", style);
+        }
+        
+        private bool DrawPresetButton(string text)
+        {
+            var style = new GUIStyle(GUI.skin.button)
+            {
+                fontSize = 11,
+                fontStyle = FontStyle.Bold,
+                fixedHeight = 25,
+                normal = { textColor = Color.white }
+            };
+            
+            return GUILayout.Button(text, style);
+        }
+        
+        private void BeginStyledBox()
+        {
+            var style = new GUIStyle(GUI.skin.box)
+            {
+                padding = new RectOffset(10, 10, 10, 10),
+                margin = new RectOffset(5, 5, 5, 5)
+            };
+            
+            EditorGUILayout.BeginVertical(style);
+        }
+        
+        private void EndStyledBox()
+        {
+            EditorGUILayout.EndVertical();
+        }
+        
+        private void BeginHorizontalLayout()
+        {
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(5);
+        }
+        
+        private void EndHorizontalLayout()
+        {
+            GUILayout.Space(5);
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        private void DrawSeparator()
+        {
+            GUILayout.Space(5f);
+            var rect = GUILayoutUtility.GetRect(0, 1, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(rect, Color.gray * 0.6f);
+            GUILayout.Space(5f);
+        }
+        
+        private void DrawInfoBox(string message, MessageType messageType)
+        {
+            EditorGUILayout.HelpBox(message, messageType);
+        }
+        
+        private void DrawFeatureCount(int activeCount, int totalCount)
+        {
+            var color = activeCount > totalCount * 0.7f ? new Color(1f, 0.7f, 0.2f, 1f) : new Color(0.2f, 0.8f, 0.4f, 1f);
+            var originalColor = GUI.contentColor;
+            GUI.contentColor = color;
+            EditorGUILayout.LabelField($"Active Features: {activeCount}/{totalCount}", CreateSmallLabelStyle());
+            GUI.contentColor = originalColor;
+        }
+        
+        private void DrawPerformanceBar(float value, string label)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(label, GUILayout.Width(80));
+            
+            var rect = GUILayoutUtility.GetRect(0, 16, GUILayout.ExpandWidth(true));
+            
+            // Background
+            EditorGUI.DrawRect(rect, Color.black * 0.3f);
+            
+            // Fill
+            var fillRect = new Rect(rect.x, rect.y, rect.width * value, rect.height);
+            Color fillColor = Color.green;
+            if (value > 0.6f) fillColor = Color.yellow;
+            if (value > 0.8f) fillColor = Color.red;
+            
+            EditorGUI.DrawRect(fillRect, fillColor);
+            
+            // Text
+            var textStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 10
+            };
+            EditorGUI.LabelField(rect, $"{value:P0}", textStyle);
+            
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        #endregion
+    }
+}
