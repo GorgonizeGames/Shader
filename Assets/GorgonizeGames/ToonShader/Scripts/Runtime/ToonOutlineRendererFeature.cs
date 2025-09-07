@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 
 namespace GorgonizeGames
 {
@@ -19,189 +20,143 @@ namespace GorgonizeGames
             public float normalThreshold = 0.4f;
             [Range(0f, 1f)]
             public float colorThreshold = 0.2f;
-            
+
             [Header("Advanced")]
-            public LayerMask outlineLayerMask = -1;
             public bool useDepthTexture = true;
             public bool useNormalTexture = true;
             public bool useColorTexture = false;
-            
+
             [Header("Performance")]
             public RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
             public bool downsample = false;
             [Range(1, 4)]
             public int downsampleFactor = 2;
         }
-        
+
         public Settings settings = new Settings();
-        private ToonOutlineRenderPass outlinePass;
-        
+        private ToonOutlineRenderPass m_OutlinePass;
+        private Material m_Material;
+        private const string ShaderName = "Hidden/GorgonizeGames/ToonOutlinePostProcess";
+
         public override void Create()
         {
-            outlinePass = new ToonOutlineRenderPass(settings);
+            m_OutlinePass = new ToonOutlineRenderPass();
         }
-        
+
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (outlinePass != null)
+            if (renderingData.cameraData.cameraType == CameraType.Preview || renderingData.cameraData.cameraType == CameraType.Reflection)
+                return;
+
+            if (m_Material == null)
             {
-                outlinePass.Setup(renderer.cameraColorTargetHandle);
-                renderer.EnqueuePass(outlinePass);
+                m_Material = CoreUtils.CreateEngineMaterial(ShaderName);
+                if (m_Material == null)
+                {
+                    Debug.LogError($"Material could not be created for shader: {ShaderName}. Outline effect will not be rendered.");
+                    return;
+                }
             }
+            
+            m_OutlinePass.Setup(settings, m_Material);
+            renderer.EnqueuePass(m_OutlinePass);
         }
-        
+
         protected override void Dispose(bool disposing)
         {
-            outlinePass?.Dispose();
+            CoreUtils.Destroy(m_Material);
+            base.Dispose(disposing);
         }
-    }
-    
-    public class ToonOutlineRenderPass : ScriptableRenderPass
-    {
-        private ToonOutlineRendererFeature.Settings settings;
-        private Material outlineMaterial;
-        private RenderTargetIdentifier cameraColorTarget;
-        private RenderTargetHandle tempTexture;
-        private RenderTargetHandle depthTexture;
-        private RenderTargetHandle normalTexture;
-        
-        // Shader property IDs
-        private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
-        private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
-        private static readonly int DepthThresholdId = Shader.PropertyToID("_DepthThreshold");
-        private static readonly int NormalThresholdId = Shader.PropertyToID("_NormalThreshold");
-        private static readonly int ColorThresholdId = Shader.PropertyToID("_ColorThreshold");
-        private static readonly int CameraDepthTextureId = Shader.PropertyToID("_CameraDepthTexture");
-        private static readonly int CameraNormalsTextureId = Shader.PropertyToID("_CameraNormalsTexture");
-        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
-        
-        private const string OutlineShaderName = "Hidden/GorgonizeGames/ToonOutlinePostProcess";
-        
-        public ToonOutlineRenderPass(ToonOutlineRendererFeature.Settings settings)
+
+        private class ToonOutlineRenderPass : ScriptableRenderPass
         {
-            this.settings = settings;
-            renderPassEvent = settings.renderPassEvent;
-            
-            tempTexture.Init("_TempOutlineTexture");
-            depthTexture.Init("_TempDepthTexture");
-            normalTexture.Init("_TempNormalTexture");
-            
-            // Create outline material
-            Shader outlineShader = Shader.Find(OutlineShaderName);
-            if (outlineShader != null)
+            private Settings m_Settings;
+            private Material m_Material;
+
+            private class PassData
             {
-                outlineMaterial = new Material(outlineShader);
-            }
-            else
-            {
-                Debug.LogError($"Toon Outline Shader not found: {OutlineShaderName}");
-            }
-        }
-        
-        public void Setup(RenderTargetIdentifier cameraColorTarget)
-        {
-            this.cameraColorTarget = cameraColorTarget;
-        }
-        
-        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
-        {
-            // Configure render targets
-            var descriptor = cameraTextureDescriptor;
-            descriptor.depthBufferBits = 0; // No depth buffer needed for temp textures
-            
-            if (settings.downsample)
-            {
-                descriptor.width /= settings.downsampleFactor;
-                descriptor.height /= settings.downsampleFactor;
+                internal Settings settings;
+                internal Material material;
+                internal UniversalResourceData resourceData;
+                internal TextureHandle source;
             }
             
-            cmd.GetTemporaryRT(tempTexture.id, descriptor, FilterMode.Bilinear);
-            
-            if (settings.useDepthTexture)
+            public ToonOutlineRenderPass()
             {
-                var depthDescriptor = descriptor;
-                depthDescriptor.colorFormat = RenderTextureFormat.RFloat;
-                cmd.GetTemporaryRT(depthTexture.id, depthDescriptor, FilterMode.Point);
+                profilingSampler = new ProfilingSampler(nameof(ToonOutlineRenderPass));
+            }
+
+            public void Setup(Settings settings, Material material)
+            {
+                this.m_Settings = settings;
+                this.m_Material = material;
+                this.renderPassEvent = settings.renderPassEvent;
             }
             
-            if (settings.useNormalTexture)
+            public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
-                var normalDescriptor = descriptor;
-                normalDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-                cmd.GetTemporaryRT(normalTexture.id, normalDescriptor, FilterMode.Point);
-            }
-        }
-        
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-        {
-            if (outlineMaterial == null)
-                return;
-            
-            CommandBuffer cmd = CommandBufferPool.Get("Toon Outline");
-            
-            // Set material properties
-            outlineMaterial.SetColor(OutlineColorId, settings.outlineColor);
-            outlineMaterial.SetFloat(OutlineWidthId, settings.outlineWidth);
-            outlineMaterial.SetFloat(DepthThresholdId, settings.depthThreshold);
-            outlineMaterial.SetFloat(NormalThresholdId, settings.normalThreshold);
-            outlineMaterial.SetFloat(ColorThresholdId, settings.colorThreshold);
-            
-            // Set shader keywords
-            SetShaderKeywords();
-            
-            // Render outline effect
-            if (settings.downsample)
-            {
-                // Downsample pass
-                cmd.Blit(cameraColorTarget, tempTexture.Identifier(), outlineMaterial, 0);
-                // Upsample pass
-                cmd.Blit(tempTexture.Identifier(), cameraColorTarget, outlineMaterial, 1);
-            }
-            else
-            {
-                // Direct pass
-                cmd.Blit(cameraColorTarget, tempTexture.Identifier(), outlineMaterial, 0);
-                cmd.Blit(tempTexture.Identifier(), cameraColorTarget);
-            }
-            
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
-        
-        private void SetShaderKeywords()
-        {
-            // Set shader keywords based on settings
-            if (settings.useDepthTexture)
-                outlineMaterial.EnableKeyword("USE_DEPTH_TEXTURE");
-            else
-                outlineMaterial.DisableKeyword("USE_DEPTH_TEXTURE");
+                if (m_Material == null) return;
                 
-            if (settings.useNormalTexture)
-                outlineMaterial.EnableKeyword("USE_NORMAL_TEXTURE");
-            else
-                outlineMaterial.DisableKeyword("USE_NORMAL_TEXTURE");
+                var resourceData = frameData.Get<UniversalResourceData>();
                 
-            if (settings.useColorTexture)
-                outlineMaterial.EnableKeyword("USE_COLOR_TEXTURE");
-            else
-                outlineMaterial.DisableKeyword("USE_COLOR_TEXTURE");
-        }
-        
-        public override void FrameCleanup(CommandBuffer cmd)
-        {
-            cmd.ReleaseTemporaryRT(tempTexture.id);
-            if (settings.useDepthTexture)
-                cmd.ReleaseTemporaryRT(depthTexture.id);
-            if (settings.useNormalTexture)
-                cmd.ReleaseTemporaryRT(normalTexture.id);
-        }
-        
-        public void Dispose()
-        {
-            if (outlineMaterial != null)
-            {
-                CoreUtils.Destroy(outlineMaterial);
+                TextureHandle tempTexture;
+                {
+                    var tempDesc = frameData.Get<UniversalCameraData>().cameraTargetDescriptor;
+                    tempDesc.depthBufferBits = 0;
+                    if (m_Settings.downsample)
+                    {
+                        tempDesc.width /= m_Settings.downsampleFactor;
+                        tempDesc.height /= m_Settings.downsampleFactor;
+                    }
+                    tempTexture = UniversalRenderer.CreateRenderGraphTexture(renderGraph, tempDesc, "_TempOutlineTexture", true);
+                }
+
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>("Toon Outline Pass", out var data, profilingSampler))
+                {
+                    data.settings = this.m_Settings;
+                    data.material = this.m_Material;
+                    data.resourceData = resourceData;
+                    data.source = resourceData.activeColorTexture;
+
+                    builder.UseTexture(data.source);
+                    if (m_Settings.useDepthTexture) builder.UseTexture(resourceData.cameraDepthTexture);
+                    if (m_Settings.useNormalTexture) builder.UseTexture(resourceData.cameraNormalsTexture);
+                    
+                    builder.SetRenderAttachment(tempTexture, 0);
+                    
+                    builder.SetRenderFunc((PassData d, RasterGraphContext context) =>
+                    {
+                        d.material.SetColor("_OutlineColor", d.settings.outlineColor);
+                        d.material.SetFloat("_OutlineWidth", d.settings.outlineWidth);
+                        d.material.SetFloat("_DepthThreshold", d.settings.depthThreshold);
+                        d.material.SetFloat("_NormalThreshold", d.settings.normalThreshold);
+                        d.material.SetFloat("_ColorThreshold", d.settings.colorThreshold);
+
+                        CoreUtils.SetKeyword(d.material, "USE_DEPTH_TEXTURE", d.settings.useDepthTexture);
+                        CoreUtils.SetKeyword(d.material, "USE_NORMAL_TEXTURE", d.settings.useNormalTexture);
+                        CoreUtils.SetKeyword(d.material, "USE_COLOR_TEXTURE", d.settings.useColorTexture);
+                        
+                        Blitter.BlitTexture(context.cmd, d.source, new Vector4(1, 1, 0, 0), d.material, 0);
+                    });
+                }
+                
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>("Copy To Camera Target", out var data, profilingSampler))
+                {
+                    data.resourceData = resourceData;
+                    data.source = tempTexture;
+                   
+                    builder.UseTexture(data.source);
+                    builder.SetRenderAttachment(resourceData.activeColorTexture, 0);
+
+                    builder.SetRenderFunc((PassData d, RasterGraphContext context) =>
+                    {
+                        Blitter.BlitTexture(context.cmd, d.source, new Vector4(1, 1, 0, 0), Blitter.GetBlitMaterial(TextureDimension.Tex2D), 0);
+                    });
+                }
             }
+            
+            public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData){}
         }
     }
 }
+
