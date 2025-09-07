@@ -7,7 +7,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Hatching effect configuration for sketch-like rendering
     /// </summary>
     [System.Serializable]
-    public class ToonHatching
+    public class GorgonizeToonHatching
     {
         [Header("Basic Hatching")]
         [Tooltip("Enable hatching effects")]
@@ -58,32 +58,32 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableHatching, enableHatching ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.Hatching, enableHatching);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableHatching, enableHatching ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.Hatching, enableHatching);
 
             if (enableHatching)
             {
                 if (hatchingTexture != null)
-                    ToonShaderProperties.SetTextureSafe(material, ToonShaderProperties.HatchingTex, hatchingTexture);
+                    GorgonizeToonShaderProperties.SetTextureSafe(material, GorgonizeToonShaderProperties.HatchingTex, hatchingTexture);
                 
                 if (crossHatchingTexture != null)
-                    ToonShaderProperties.SetTextureSafe(material, ToonShaderProperties.CrossHatchingTex, crossHatchingTexture);
+                    GorgonizeToonShaderProperties.SetTextureSafe(material, GorgonizeToonShaderProperties.CrossHatchingTex, crossHatchingTexture);
 
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.HatchingDensity, hatchingDensity);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.HatchingIntensity, hatchingIntensity);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.HatchingThreshold, hatchingThreshold);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.CrossHatchingThreshold, crossHatchingThreshold);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.HatchingRotation, hatchingRotation);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.HatchingDensity, hatchingDensity);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.HatchingIntensity, hatchingIntensity);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.HatchingThreshold, hatchingThreshold);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.CrossHatchingThreshold, crossHatchingThreshold);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.HatchingRotation, hatchingRotation);
             }
 
             // Screen space hatching
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableScreenSpaceHatching, enableScreenSpaceHatching ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.ScreenSpaceHatching, enableScreenSpaceHatching);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableScreenSpaceHatching, enableScreenSpaceHatching ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.ScreenSpaceHatching, enableScreenSpaceHatching);
 
             if (enableScreenSpaceHatching)
             {
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.ScreenHatchScale, screenHatchScale);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.ScreenHatchBias, screenHatchBias);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.ScreenHatchScale, screenHatchScale);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.ScreenHatchBias, screenHatchBias);
             }
         }
 
@@ -100,13 +100,29 @@ namespace Gorgonize.ToonShader.Settings
             screenHatchScale = Mathf.Clamp(screenHatchScale, 0.1f, 10f);
             screenHatchBias = Mathf.Clamp(screenHatchBias, -1f, 1f);
         }
+
+        public void CopyFrom(GorgonizeToonHatching other)
+        {
+            if (other == null) return;
+            enableHatching = other.enableHatching;
+            hatchingTexture = other.hatchingTexture;
+            crossHatchingTexture = other.crossHatchingTexture;
+            hatchingDensity = other.hatchingDensity;
+            hatchingIntensity = other.hatchingIntensity;
+            hatchingThreshold = other.hatchingThreshold;
+            crossHatchingThreshold = other.crossHatchingThreshold;
+            hatchingRotation = other.hatchingRotation;
+            enableScreenSpaceHatching = other.enableScreenSpaceHatching;
+            screenHatchScale = other.screenHatchScale;
+            screenHatchBias = other.screenHatchBias;
+        }
     }
 
     /// <summary>
     /// Color grading configuration
     /// </summary>
     [System.Serializable]
-    public class ToonColorGrading
+    public class GorgonizeToonColorGrading
     {
         [Range(0f, 2f)]
         [Tooltip("Color saturation multiplier")]
@@ -135,11 +151,30 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.Saturation, saturation);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.Brightness, brightness);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.Hue, hueShift);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.Contrast, contrast);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.Gamma, gamma);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.Saturation, saturation);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.Brightness, brightness);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.Hue, hueShift);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.Contrast, contrast);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.Gamma, gamma);
+        }
+
+        public void CopyFrom(GorgonizeToonColorGrading other)
+        {
+            if (other == null) return;
+            saturation = other.saturation;
+            brightness = other.brightness;
+            hueShift = other.hueShift;
+            contrast = other.contrast;
+            gamma = other.gamma;
+        }
+
+        public void ValidateSettings()
+        {
+            saturation = Mathf.Clamp(saturation, 0f, 2f);
+            brightness = Mathf.Clamp(brightness, 0f, 2f);
+            hueShift = Mathf.Clamp(hueShift, -180f, 180f);
+            contrast = Mathf.Clamp(contrast, 0.5f, 3f);
+            gamma = Mathf.Clamp(gamma, 0.5f, 3f);
         }
     }
 
@@ -147,7 +182,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Posterization and cel-shading effects
     /// </summary>
     [System.Serializable]
-    public class ToonQuantization
+    public class GorgonizeToonQuantization
     {
         [Header("Posterization")]
         [Tooltip("Enable color posterization")]
@@ -172,21 +207,44 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnablePosterize, enablePosterize ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.Posterize, enablePosterize);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnablePosterize, enablePosterize ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.Posterize, enablePosterize);
             
             if (enablePosterize)
             {
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.PosterizeLevels, posterizeLevels);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.PosterizeLevels, posterizeLevels);
             }
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableCelShading, enableCelShading ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.CelShading, enableCelShading);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableCelShading, enableCelShading ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.CelShading, enableCelShading);
             
             if (enableCelShading)
             {
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.CelShadingSteps, celShadingSteps);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.CelShadingSteps, celShadingSteps);
             }
+        }
+
+        public void CopyFrom(GorgonizeToonQuantization other)
+        {
+            if (other == null) return;
+            enablePosterize = other.enablePosterize;
+            posterizeLevels = other.posterizeLevels;
+            enableCelShading = other.enableCelShading;
+            celShadingSteps = other.celShadingSteps;
+        }
+
+        public void ValidateSettings()
+        {
+            posterizeLevels = Mathf.Clamp(posterizeLevels, 2f, 32f);
+            celShadingSteps = Mathf.Clamp(celShadingSteps, 2f, 10f);
+        }
+
+        public int GetActiveEffectCount()
+        {
+            int count = 0;
+            if (enablePosterize) count++;
+            if (enableCelShading) count++;
+            return count;
         }
     }
 
@@ -194,16 +252,16 @@ namespace Gorgonize.ToonShader.Settings
     /// Complete stylization settings container
     /// </summary>
     [System.Serializable]
-    public class ToonStylization
+    public class GorgonizeToonStylization
     {
         [Header("Hatching Effects")]
-        public ToonHatching hatching = new ToonHatching();
+        public GorgonizeToonHatching hatching = new GorgonizeToonHatching();
         
         [Header("Color Processing")]
-        public ToonColorGrading colorGrading = new ToonColorGrading();
+        public GorgonizeToonColorGrading colorGrading = new GorgonizeToonColorGrading();
         
         [Header("Quantization Effects")]
-        public ToonQuantization quantization = new ToonQuantization();
+        public GorgonizeToonQuantization quantization = new GorgonizeToonQuantization();
 
         /// <summary>
         /// Applies all stylization effects to material
@@ -223,8 +281,7 @@ namespace Gorgonize.ToonShader.Settings
             int count = 0;
             if (hatching.enableHatching) count++;
             if (hatching.enableScreenSpaceHatching) count++;
-            if (quantization.enablePosterize) count++;
-            if (quantization.enableCelShading) count++;
+            count += quantization.GetActiveEffectCount();
             return count;
         }
 
@@ -249,9 +306,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates sketch-style preset
         /// </summary>
-        public static ToonStylization CreateSketchPreset()
+        public static GorgonizeToonStylization CreateSketchPreset()
         {
-            var preset = new ToonStylization();
+            var preset = new GorgonizeToonStylization();
             
             preset.hatching.enableHatching = true;
             preset.hatching.hatchingDensity = 2f;
@@ -269,9 +326,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates comic book style preset
         /// </summary>
-        public static ToonStylization CreateComicPreset()
+        public static GorgonizeToonStylization CreateComicPreset()
         {
-            var preset = new ToonStylization();
+            var preset = new GorgonizeToonStylization();
             
             preset.quantization.enableCelShading = true;
             preset.quantization.celShadingSteps = 4f;
@@ -285,9 +342,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates painterly style preset
         /// </summary>
-        public static ToonStylization CreatePainterlyPreset()
+        public static GorgonizeToonStylization CreatePainterlyPreset()
         {
-            var preset = new ToonStylization();
+            var preset = new GorgonizeToonStylization();
             
             preset.quantization.enablePosterize = true;
             preset.quantization.posterizeLevels = 6f;
@@ -304,15 +361,19 @@ namespace Gorgonize.ToonShader.Settings
         public void ValidateSettings()
         {
             hatching.ValidateSettings();
-            
-            colorGrading.saturation = Mathf.Clamp(colorGrading.saturation, 0f, 2f);
-            colorGrading.brightness = Mathf.Clamp(colorGrading.brightness, 0f, 2f);
-            colorGrading.hueShift = Mathf.Clamp(colorGrading.hueShift, -180f, 180f);
-            colorGrading.contrast = Mathf.Clamp(colorGrading.contrast, 0.5f, 3f);
-            colorGrading.gamma = Mathf.Clamp(colorGrading.gamma, 0.5f, 3f);
-            
-            quantization.posterizeLevels = Mathf.Clamp(quantization.posterizeLevels, 2f, 32f);
-            quantization.celShadingSteps = Mathf.Clamp(quantization.celShadingSteps, 2f, 10f);
+            colorGrading.ValidateSettings();
+            quantization.ValidateSettings();
+        }
+
+        /// <summary>
+        /// Copy settings from another stylization instance
+        /// </summary>
+        public void CopyFrom(GorgonizeToonStylization other)
+        {
+            if (other == null) return;
+            hatching.CopyFrom(other.hatching);
+            colorGrading.CopyFrom(other.colorGrading);
+            quantization.CopyFrom(other.quantization);
         }
     }
 }

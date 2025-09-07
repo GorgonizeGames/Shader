@@ -8,8 +8,13 @@ namespace Gorgonize.ToonShader.Settings
     /// Handles runtime animations for various shader properties
     /// </summary>
     [System.Serializable]
-    public class ToonAnimationSettings
+    public class GorgonizeToonAnimationSettings
     {
+        [Header("Global Animation")]
+        [Range(0f, 5f)]
+        [Tooltip("Global animation speed multiplier")]
+        public float globalAnimationSpeed = 1f;
+
         [Header("Rim Animation")]
         [Tooltip("Animate rim lighting intensity over time")]
         public bool animateRimLighting = false;
@@ -81,13 +86,16 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
+            // Apply global speed multiplier
+            totalTime *= globalAnimationSpeed;
+
             // Rim lighting animation
             if (animateRimLighting)
             {
                 float animTime = totalTime * rimAnimationSpeed;
                 float curveValue = rimAnimationCurve.Evaluate(animTime % 1f);
                 float animatedIntensity = baseRimIntensity * curveValue;
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.RimIntensity, animatedIntensity);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.RimIntensity, animatedIntensity);
             }
 
             // Emission animation
@@ -96,14 +104,14 @@ namespace Gorgonize.ToonShader.Settings
                 float animTime = totalTime * emissionAnimationSpeed;
                 float curveValue = emissionAnimationCurve.Evaluate(animTime % 1f);
                 float animatedIntensity = baseEmissionIntensity * curveValue;
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EmissionIntensity, animatedIntensity);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EmissionIntensity, animatedIntensity);
             }
 
             // Hue animation
             if (animateHue)
             {
                 float animatedHue = (totalTime * hueAnimationSpeed * 360f) % 360f - 180f;
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.Hue, animatedHue);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.Hue, animatedHue);
             }
 
             // Hatching animation
@@ -112,7 +120,7 @@ namespace Gorgonize.ToonShader.Settings
                 float animTime = totalTime * hatchingAnimationSpeed;
                 float rotationOffset = Mathf.Sin(animTime) * 15f; // Oscillate ±15 degrees
                 float animatedRotation = baseHatchingRotation + rotationOffset;
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.HatchingRotation, animatedRotation);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.HatchingRotation, animatedRotation);
             }
 
             // Breathing effect
@@ -129,14 +137,14 @@ namespace Gorgonize.ToonShader.Settings
                     currentRimIntensity = baseRimIntensity * curveValue;
                 }
                 
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.RimIntensity, currentRimIntensity * breathingValue);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.RimIntensity, currentRimIntensity * breathingValue);
             }
 
             // Emission scrolling
             if (enableEmissionScrolling && emissionScrollSpeed != Vector2.zero)
             {
                 Vector4 scrollVector = new Vector4(emissionScrollSpeed.x, emissionScrollSpeed.y, 0, 0);
-                ToonShaderProperties.SetVectorSafe(material, ToonShaderProperties.EmissionScrollSpeed, scrollVector);
+                GorgonizeToonShaderProperties.SetVectorSafe(material, GorgonizeToonShaderProperties.EmissionScrollSpeed, scrollVector);
             }
         }
 
@@ -153,10 +161,10 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.RimIntensity, baseRimIntensity);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EmissionIntensity, baseEmissionIntensity);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.HatchingRotation, baseHatchingRotation);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.Hue, baseHue);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.RimIntensity, baseRimIntensity);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EmissionIntensity, baseEmissionIntensity);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.HatchingRotation, baseHatchingRotation);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.Hue, baseHue);
         }
 
         /// <summary>
@@ -207,6 +215,7 @@ namespace Gorgonize.ToonShader.Settings
         /// </summary>
         public void ValidateSettings()
         {
+            globalAnimationSpeed = Mathf.Clamp(globalAnimationSpeed, 0f, 5f);
             rimAnimationSpeed = Mathf.Clamp(rimAnimationSpeed, 0.1f, 5f);
             emissionAnimationSpeed = Mathf.Clamp(emissionAnimationSpeed, 0.1f, 3f);
             hueAnimationSpeed = Mathf.Clamp(hueAnimationSpeed, 0.1f, 2f);
@@ -225,10 +234,11 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates a preset for gentle animations
         /// </summary>
-        public static ToonAnimationSettings CreateGentlePreset()
+        public static GorgonizeToonAnimationSettings CreateGentlePreset()
         {
-            return new ToonAnimationSettings
+            return new GorgonizeToonAnimationSettings
             {
+                globalAnimationSpeed = 1f,
                 enableBreathingEffect = true,
                 breathingSpeed = 1f,
                 breathingIntensity = 0.1f,
@@ -242,10 +252,11 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates a preset for dynamic animations
         /// </summary>
-        public static ToonAnimationSettings CreateDynamicPreset()
+        public static GorgonizeToonAnimationSettings CreateDynamicPreset()
         {
-            return new ToonAnimationSettings
+            return new GorgonizeToonAnimationSettings
             {
+                globalAnimationSpeed = 1.5f,
                 animateRimLighting = true,
                 rimAnimationSpeed = 1.5f,
                 animateEmission = true,
@@ -261,10 +272,11 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates a preset for psychedelic animations
         /// </summary>
-        public static ToonAnimationSettings CreatePsychedelicPreset()
+        public static GorgonizeToonAnimationSettings CreatePsychedelicPreset()
         {
-            return new ToonAnimationSettings
+            return new GorgonizeToonAnimationSettings
             {
+                globalAnimationSpeed = 2f,
                 animateRimLighting = true,
                 rimAnimationSpeed = 2.5f,
                 animateEmission = true,
@@ -282,10 +294,11 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates a preset with no animations
         /// </summary>
-        public static ToonAnimationSettings CreateStaticPreset()
+        public static GorgonizeToonAnimationSettings CreateStaticPreset()
         {
-            return new ToonAnimationSettings
+            return new GorgonizeToonAnimationSettings
             {
+                globalAnimationSpeed = 0f,
                 animateRimLighting = false,
                 animateEmission = false,
                 animateHue = false,
@@ -298,10 +311,11 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Copies settings from another animation settings instance
         /// </summary>
-        public void CopyFrom(ToonAnimationSettings other)
+        public void CopyFrom(GorgonizeToonAnimationSettings other)
         {
             if (other == null) return;
 
+            globalAnimationSpeed = other.globalAnimationSpeed;
             animateRimLighting = other.animateRimLighting;
             rimAnimationSpeed = other.rimAnimationSpeed;
             rimAnimationCurve = other.rimAnimationCurve;

@@ -6,7 +6,7 @@ namespace Gorgonize.ToonShader.Core
     /// Centralized shader property ID cache system for performance optimization
     /// Contains all shader property IDs used by the Ultimate Toon Shader
     /// </summary>
-    public static class ToonShaderProperties
+    public static class GorgonizeToonShaderProperties
     {
         #region Base Properties
         public static readonly int BaseColor = Shader.PropertyToID("_BaseColor");

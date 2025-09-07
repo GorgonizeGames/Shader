@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Gorgonize.ToonShader.Core;
 using Gorgonize.ToonShader.Settings;
+using Gorgonize.ToonShader.Presets;
 
 namespace Gorgonize.ToonShader
 {
@@ -270,8 +271,12 @@ namespace Gorgonize.ToonShader
             GorgonizeToonShaderProperties.SetColorSafe(materialInstance, GorgonizeToonShaderProperties.BaseColor, baseColor);
             GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, GorgonizeToonShaderProperties.Saturation, saturation);
             GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, GorgonizeToonShaderProperties.Brightness, brightness);
-            GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, GorgonizeToonShaderProperties.Metallic, metallic);
-            GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, GorgonizeToonShaderProperties.Smoothness, smoothness);
+            
+            // Set metallic and smoothness if properties exist
+            if (materialInstance.HasProperty("_Metallic"))
+                materialInstance.SetFloat("_Metallic", metallic);
+            if (materialInstance.HasProperty("_Smoothness"))
+                materialInstance.SetFloat("_Smoothness", smoothness);
         }
 
         private void UpdateTextures()
@@ -308,19 +313,24 @@ namespace Gorgonize.ToonShader
         private void UpdateAdvancedFeatures()
         {
             // Quality level
-            GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, "_QualityLevel", qualityLevel);
+            if (materialInstance.HasProperty("_QualityLevel"))
+                materialInstance.SetFloat("_QualityLevel", qualityLevel);
             
             // LOD fade distance
-            GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, "_LODFadeDistance", lodFadeDistance);
+            if (materialInstance.HasProperty("_LODFadeDistance"))
+                materialInstance.SetFloat("_LODFadeDistance", lodFadeDistance);
             
             // Animation speed
-            GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, "_AnimationSpeed", animationSettings.globalAnimationSpeed);
+            if (materialInstance.HasProperty("_AnimationSpeed"))
+                materialInstance.SetFloat("_AnimationSpeed", animationSettings.globalAnimationSpeed);
             
             // GPU Instancing
-            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_INSTANCING_SUPPORT", enableGPUInstancing);
+            if (materialInstance.HasProperty("_EnableInstancing"))
+                materialInstance.SetFloat("_EnableInstancing", enableGPUInstancing ? 1f : 0f);
             
             // Temporal effects
-            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_ANIMATED_PROPERTIES", enableTemporalEffects);
+            if (materialInstance.HasProperty("_EnableTemporalEffects"))
+                materialInstance.SetFloat("_EnableTemporalEffects", enableTemporalEffects ? 1f : 0f);
         }
 
         private void UpdateQualityKeywords()
@@ -345,8 +355,10 @@ namespace Gorgonize.ToonShader
 
         private void UpdateDebugSettings()
         {
-            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_DEBUG_MODE", debugMode);
-            GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, "_DebugView", (float)debugVisualization);
+            if (materialInstance.HasProperty("_DebugMode"))
+                materialInstance.SetFloat("_DebugMode", debugMode ? 1f : 0f);
+            if (materialInstance.HasProperty("_DebugView"))
+                materialInstance.SetFloat("_DebugView", (float)debugVisualization);
         }
         #endregion
 
@@ -474,9 +486,9 @@ namespace Gorgonize.ToonShader
         {
             EnableAdvancedFeatures();
             GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_SUBSURFACE", visualEffects.subsurface.enableSubsurface);
-            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_FORCE_FIELD", visualEffects.forceField.enableForceField);
-            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_HOLOGRAM", visualEffects.hologram.enableHologram);
-            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_DISSOLVE", visualEffects.dissolve.enableDissolve);
+            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_FORCE_FIELD", visualEffects.specialEffects.enableForceField);
+            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_HOLOGRAM", visualEffects.specialEffects.enableHologram);
+            GorgonizeToonShaderProperties.SetKeywordSafe(materialInstance, "_DISSOLVE", visualEffects.specialEffects.enableDissolve);
         }
 
         /// <summary>
@@ -550,7 +562,8 @@ namespace Gorgonize.ToonShader
         {
             // Set LOD fade in shader
             float lodFade = Mathf.Clamp01(1f - (distance / lodFadeDistance));
-            GorgonizeToonShaderProperties.SetFloatSafe(materialInstance, "_LODFadeDistance", lodFadeDistance);
+            if (materialInstance.HasProperty("_LODFadeDistance"))
+                materialInstance.SetFloat("_LODFadeDistance", lodFadeDistance);
         }
         #endregion
 

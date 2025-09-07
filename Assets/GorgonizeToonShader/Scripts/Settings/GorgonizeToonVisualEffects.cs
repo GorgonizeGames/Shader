@@ -7,7 +7,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Rim lighting effect configuration
     /// </summary>
     [System.Serializable]
-    public class ToonRimLighting
+    public class GorgonizeToonRimLighting
     {
         [Tooltip("Enable rim lighting effect")]
         public bool enableRimLighting = true;
@@ -31,19 +31,19 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableRimLighting, enableRimLighting ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.RimLighting, enableRimLighting);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableRimLighting, enableRimLighting ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.RimLighting, enableRimLighting);
             
             if (enableRimLighting)
             {
-                ToonShaderProperties.SetColorSafe(material, ToonShaderProperties.RimColor, rimColor);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.RimPower, rimPower);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.RimIntensity, rimIntensity);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.RimThreshold, rimThreshold);
+                GorgonizeToonShaderProperties.SetColorSafe(material, GorgonizeToonShaderProperties.RimColor, rimColor);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.RimPower, rimPower);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.RimIntensity, rimIntensity);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.RimThreshold, rimThreshold);
             }
         }
 
-        public void CopyFrom(ToonRimLighting other)
+        public void CopyFrom(GorgonizeToonRimLighting other)
         {
             if (other == null) return;
             enableRimLighting = other.enableRimLighting;
@@ -65,7 +65,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Specular highlight configuration
     /// </summary>
     [System.Serializable]
-    public class ToonSpecular
+    public class GorgonizeToonSpecular
     {
         [Tooltip("Enable specular highlights")]
         public bool enableSpecular = true;
@@ -89,19 +89,19 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableSpecular, enableSpecular ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.Specular, enableSpecular);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableSpecular, enableSpecular ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.Specular, enableSpecular);
             
             if (enableSpecular)
             {
-                ToonShaderProperties.SetColorSafe(material, ToonShaderProperties.SpecularColor, specularColor);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.SpecularSize, specularSize);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.SpecularSmoothness, specularSmoothness);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.SpecularIntensity, specularIntensity);
+                GorgonizeToonShaderProperties.SetColorSafe(material, GorgonizeToonShaderProperties.SpecularColor, specularColor);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.SpecularSize, specularSize);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.SpecularSmoothness, specularSmoothness);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.SpecularIntensity, specularIntensity);
             }
         }
 
-        public void CopyFrom(ToonSpecular other)
+        public void CopyFrom(GorgonizeToonSpecular other)
         {
             if (other == null) return;
             enableSpecular = other.enableSpecular;
@@ -123,7 +123,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Matcap effect configuration
     /// </summary>
     [System.Serializable]
-    public class ToonMatcap
+    public class GorgonizeToonMatcap
     {
         [Tooltip("Enable matcap effect")]
         public bool enableMatcap = false;
@@ -142,20 +142,20 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableMatcap, enableMatcap ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.Matcap, enableMatcap);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableMatcap, enableMatcap ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.Matcap, enableMatcap);
             
             if (enableMatcap)
             {
                 if (matcapTexture != null)
-                    ToonShaderProperties.SetTextureSafe(material, ToonShaderProperties.MatcapTex, matcapTexture);
+                    GorgonizeToonShaderProperties.SetTextureSafe(material, GorgonizeToonShaderProperties.MatcapTex, matcapTexture);
                 
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.MatcapIntensity, matcapIntensity);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.MatcapBlendMode, (float)blendMode);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.MatcapIntensity, matcapIntensity);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.MatcapBlendMode, (float)blendMode);
             }
         }
 
-        public void CopyFrom(ToonMatcap other)
+        public void CopyFrom(GorgonizeToonMatcap other)
         {
             if (other == null) return;
             enableMatcap = other.enableMatcap;
@@ -174,7 +174,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Fresnel effect configuration
     /// </summary>
     [System.Serializable]
-    public class ToonFresnel
+    public class GorgonizeToonFresnel
     {
         [Tooltip("Enable fresnel effect")]
         public bool enableFresnel = false;
@@ -194,18 +194,18 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableFresnel, enableFresnel ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.Fresnel, enableFresnel);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableFresnel, enableFresnel ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.Fresnel, enableFresnel);
             
             if (enableFresnel)
             {
-                ToonShaderProperties.SetColorSafe(material, ToonShaderProperties.FresnelColor, fresnelColor);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.FresnelPower, fresnelPower);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.FresnelIntensity, fresnelIntensity);
+                GorgonizeToonShaderProperties.SetColorSafe(material, GorgonizeToonShaderProperties.FresnelColor, fresnelColor);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.FresnelPower, fresnelPower);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.FresnelIntensity, fresnelIntensity);
             }
         }
 
-        public void CopyFrom(ToonFresnel other)
+        public void CopyFrom(GorgonizeToonFresnel other)
         {
             if (other == null) return;
             enableFresnel = other.enableFresnel;
@@ -225,7 +225,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Subsurface scattering effect configuration
     /// </summary>
     [System.Serializable]
-    public class ToonSubsurface
+    public class GorgonizeToonSubsurface
     {
         [Tooltip("Enable subsurface scattering")]
         public bool enableSubsurface = false;
@@ -245,18 +245,18 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableSubsurface, enableSubsurface ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.Subsurface, enableSubsurface);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableSubsurface, enableSubsurface ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.Subsurface, enableSubsurface);
             
             if (enableSubsurface)
             {
-                ToonShaderProperties.SetColorSafe(material, ToonShaderProperties.SubsurfaceColor, subsurfaceColor);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.SubsurfacePower, subsurfacePower);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.SubsurfaceIntensity, subsurfaceIntensity);
+                GorgonizeToonShaderProperties.SetColorSafe(material, GorgonizeToonShaderProperties.SubsurfaceColor, subsurfaceColor);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.SubsurfacePower, subsurfacePower);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.SubsurfaceIntensity, subsurfaceIntensity);
             }
         }
 
-        public void CopyFrom(ToonSubsurface other)
+        public void CopyFrom(GorgonizeToonSubsurface other)
         {
             if (other == null) return;
             enableSubsurface = other.enableSubsurface;
@@ -276,7 +276,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Outline effect configuration
     /// </summary>
     [System.Serializable]
-    public class ToonOutline
+    public class GorgonizeToonOutline
     {
         [Tooltip("Enable outline effect")]
         public bool enableOutline = false;
@@ -292,17 +292,17 @@ namespace Gorgonize.ToonShader.Settings
         {
             if (material == null) return;
 
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.EnableOutline, enableOutline ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.Outline, enableOutline);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.EnableOutline, enableOutline ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.Outline, enableOutline);
             
             if (enableOutline)
             {
-                ToonShaderProperties.SetColorSafe(material, ToonShaderProperties.OutlineColor, outlineColor);
-                ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.OutlineWidth, outlineWidth);
+                GorgonizeToonShaderProperties.SetColorSafe(material, GorgonizeToonShaderProperties.OutlineColor, outlineColor);
+                GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.OutlineWidth, outlineWidth);
             }
         }
 
-        public void CopyFrom(ToonOutline other)
+        public void CopyFrom(GorgonizeToonOutline other)
         {
             if (other == null) return;
             enableOutline = other.enableOutline;
@@ -313,6 +313,129 @@ namespace Gorgonize.ToonShader.Settings
         public void ValidateSettings()
         {
             outlineWidth = Mathf.Clamp(outlineWidth, 0f, 0.1f);
+        }
+    }
+
+    /// <summary>
+    /// Special effects configuration
+    /// </summary>
+    [System.Serializable]
+    public class GorgonizeToonSpecialEffects
+    {
+        [Header("Force Field")]
+        [Tooltip("Enable force field effect")]
+        public bool enableForceField = false;
+        
+        [Tooltip("Color of force field effect")]
+        public Color forceFieldColor = new Color(0.2f, 0.8f, 1f, 1f);
+        
+        [Range(0f, 2f)]
+        [Tooltip("Intensity of force field effect")]
+        public float forceFieldIntensity = 1f;
+
+        [Header("Hologram")]
+        [Tooltip("Enable hologram effect")]
+        public bool enableHologram = false;
+        
+        [Range(0f, 2f)]
+        [Tooltip("Intensity of hologram effect")]
+        public float hologramIntensity = 1f;
+
+        [Header("Dissolve")]
+        [Tooltip("Enable dissolve effect")]
+        public bool enableDissolve = false;
+        
+        [Range(0f, 1f)]
+        [Tooltip("Amount of dissolution")]
+        public float dissolveAmount = 0f;
+
+        public void ApplyToMaterial(Material material)
+        {
+            if (material == null) return;
+
+            // Force field
+            if (material.HasProperty("_EnableForceField"))
+                material.SetFloat("_EnableForceField", enableForceField ? 1f : 0f);
+            
+            if (enableForceField)
+            {
+                if (material.HasProperty("_ForceFieldColor"))
+                    material.SetColor("_ForceFieldColor", forceFieldColor);
+                if (material.HasProperty("_ForceFieldIntensity"))
+                    material.SetFloat("_ForceFieldIntensity", forceFieldIntensity);
+                material.EnableKeyword("_FORCE_FIELD");
+            }
+            else
+            {
+                material.DisableKeyword("_FORCE_FIELD");
+            }
+
+            // Hologram
+            if (material.HasProperty("_EnableHologram"))
+                material.SetFloat("_EnableHologram", enableHologram ? 1f : 0f);
+            
+            if (enableHologram)
+            {
+                if (material.HasProperty("_HologramIntensity"))
+                    material.SetFloat("_HologramIntensity", hologramIntensity);
+                material.EnableKeyword("_HOLOGRAM");
+            }
+            else
+            {
+                material.DisableKeyword("_HOLOGRAM");
+            }
+
+            // Dissolve
+            if (material.HasProperty("_EnableDissolve"))
+                material.SetFloat("_EnableDissolve", enableDissolve ? 1f : 0f);
+            
+            if (enableDissolve)
+            {
+                if (material.HasProperty("_DissolveAmount"))
+                    material.SetFloat("_DissolveAmount", dissolveAmount);
+                material.EnableKeyword("_DISSOLVE");
+            }
+            else
+            {
+                material.DisableKeyword("_DISSOLVE");
+            }
+        }
+
+        public void CopyFrom(GorgonizeToonSpecialEffects other)
+        {
+            if (other == null) return;
+            enableForceField = other.enableForceField;
+            forceFieldColor = other.forceFieldColor;
+            forceFieldIntensity = other.forceFieldIntensity;
+            enableHologram = other.enableHologram;
+            hologramIntensity = other.hologramIntensity;
+            enableDissolve = other.enableDissolve;
+            dissolveAmount = other.dissolveAmount;
+        }
+
+        public void ValidateSettings()
+        {
+            forceFieldIntensity = Mathf.Clamp(forceFieldIntensity, 0f, 2f);
+            hologramIntensity = Mathf.Clamp(hologramIntensity, 0f, 2f);
+            dissolveAmount = Mathf.Clamp01(dissolveAmount);
+        }
+
+        public int GetActiveEffectCount()
+        {
+            int count = 0;
+            if (enableForceField) count++;
+            if (enableHologram) count++;
+            if (enableDissolve) count++;
+            return count;
+        }
+
+        public float GetPerformanceCost()
+        {
+            float cost = 0f;
+            if (enableForceField) cost += 0.15f;
+            if (enableHologram) cost += 0.1f;
+            if (enableDissolve) cost += 0.05f;
+            return Mathf.Clamp01(cost);
         }
     }
 
@@ -330,17 +453,20 @@ namespace Gorgonize.ToonShader.Settings
     /// Container for all visual effects settings
     /// </summary>
     [System.Serializable]
-    public class ToonVisualEffects
+    public class GorgonizeToonVisualEffects
     {
         [Header("Surface Effects")]
-        public ToonRimLighting rimLighting = new ToonRimLighting();
-        public ToonSpecular specular = new ToonSpecular();
-        public ToonMatcap matcap = new ToonMatcap();
+        public GorgonizeToonRimLighting rimLighting = new GorgonizeToonRimLighting();
+        public GorgonizeToonSpecular specular = new GorgonizeToonSpecular();
+        public GorgonizeToonMatcap matcap = new GorgonizeToonMatcap();
         
         [Header("Advanced Effects")]
-        public ToonFresnel fresnel = new ToonFresnel();
-        public ToonSubsurface subsurface = new ToonSubsurface();
-        public ToonOutline outline = new ToonOutline();
+        public GorgonizeToonFresnel fresnel = new GorgonizeToonFresnel();
+        public GorgonizeToonSubsurface subsurface = new GorgonizeToonSubsurface();
+        public GorgonizeToonOutline outline = new GorgonizeToonOutline();
+
+        [Header("Special Effects")]
+        public GorgonizeToonSpecialEffects specialEffects = new GorgonizeToonSpecialEffects();
 
         /// <summary>
         /// Applies all visual effects to the material
@@ -354,6 +480,7 @@ namespace Gorgonize.ToonShader.Settings
             fresnel.ApplyToMaterial(material);
             subsurface.ApplyToMaterial(material);
             outline.ApplyToMaterial(material);
+            specialEffects.ApplyToMaterial(material);
         }
 
         /// <summary>
@@ -368,6 +495,7 @@ namespace Gorgonize.ToonShader.Settings
             if (fresnel.enableFresnel) count++;
             if (subsurface.enableSubsurface) count++;
             if (outline.enableOutline) count++;
+            count += specialEffects.GetActiveEffectCount();
             return count;
         }
 
@@ -384,6 +512,7 @@ namespace Gorgonize.ToonShader.Settings
             if (fresnel.enableFresnel) cost += 0.1f;
             if (subsurface.enableSubsurface) cost += 0.25f;
             if (outline.enableOutline) cost += 0.3f;
+            cost += specialEffects.GetPerformanceCost();
             
             return Mathf.Clamp01(cost);
         }
@@ -391,7 +520,7 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Copies all settings from another visual effects instance
         /// </summary>
-        public void CopyFrom(ToonVisualEffects other)
+        public void CopyFrom(GorgonizeToonVisualEffects other)
         {
             if (other == null) return;
             
@@ -401,6 +530,7 @@ namespace Gorgonize.ToonShader.Settings
             fresnel.CopyFrom(other.fresnel);
             subsurface.CopyFrom(other.subsurface);
             outline.CopyFrom(other.outline);
+            specialEffects.CopyFrom(other.specialEffects);
         }
 
         /// <summary>
@@ -414,14 +544,15 @@ namespace Gorgonize.ToonShader.Settings
             fresnel.ValidateSettings();
             subsurface.ValidateSettings();
             outline.ValidateSettings();
+            specialEffects.ValidateSettings();
         }
 
         /// <summary>
         /// Creates anime-style visual effects preset
         /// </summary>
-        public static ToonVisualEffects CreateAnimePreset()
+        public static GorgonizeToonVisualEffects CreateAnimePreset()
         {
-            var effects = new ToonVisualEffects();
+            var effects = new GorgonizeToonVisualEffects();
             
             effects.rimLighting.enableRimLighting = true;
             effects.rimLighting.rimColor = new Color(1f, 0.95f, 0.8f, 1f);
@@ -438,9 +569,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates cartoon-style visual effects preset
         /// </summary>
-        public static ToonVisualEffects CreateCartoonPreset()
+        public static GorgonizeToonVisualEffects CreateCartoonPreset()
         {
-            var effects = new ToonVisualEffects();
+            var effects = new GorgonizeToonVisualEffects();
             
             effects.rimLighting.enableRimLighting = true;
             effects.rimLighting.rimIntensity = 3f;
@@ -455,9 +586,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates realistic toon visual effects preset
         /// </summary>
-        public static ToonVisualEffects CreateRealisticPreset()
+        public static GorgonizeToonVisualEffects CreateRealisticPreset()
         {
-            var effects = new ToonVisualEffects();
+            var effects = new GorgonizeToonVisualEffects();
             
             effects.subsurface.enableSubsurface = true;
             effects.subsurface.subsurfaceColor = new Color(1f, 0.7f, 0.7f, 1f);
@@ -472,9 +603,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates minimal visual effects preset for performance
         /// </summary>
-        public static ToonVisualEffects CreateMinimalPreset()
+        public static GorgonizeToonVisualEffects CreateMinimalPreset()
         {
-            var effects = new ToonVisualEffects();
+            var effects = new GorgonizeToonVisualEffects();
             
             effects.rimLighting.enableRimLighting = false;
             effects.specular.enableSpecular = false;
@@ -482,6 +613,9 @@ namespace Gorgonize.ToonShader.Settings
             effects.fresnel.enableFresnel = false;
             effects.subsurface.enableSubsurface = false;
             effects.outline.enableOutline = false;
+            effects.specialEffects.enableForceField = false;
+            effects.specialEffects.enableHologram = false;
+            effects.specialEffects.enableDissolve = false;
             
             return effects;
         }

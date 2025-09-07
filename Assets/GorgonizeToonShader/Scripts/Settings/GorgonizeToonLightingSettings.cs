@@ -8,7 +8,7 @@ namespace Gorgonize.ToonShader.Settings
     /// Handles shadow calculation, light ramps, and advanced lighting features
     /// </summary>
     [System.Serializable]
-    public class ToonLightingSettings
+    public class GorgonizeToonLightingSettings
     {
         [Header("Shadow Configuration")]
         [Range(0f, 1f)]
@@ -55,32 +55,32 @@ namespace Gorgonize.ToonShader.Settings
             if (material == null) return;
 
             // Basic shadow properties
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.ShadowThreshold, shadowThreshold);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.ShadowSmoothness, shadowSmoothness);
-            ToonShaderProperties.SetColorSafe(material, ToonShaderProperties.ShadowColor, shadowColor);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.ShadowIntensity, shadowIntensity);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.ShadowThreshold, shadowThreshold);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.ShadowSmoothness, shadowSmoothness);
+            GorgonizeToonShaderProperties.SetColorSafe(material, GorgonizeToonShaderProperties.ShadowColor, shadowColor);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.ShadowIntensity, shadowIntensity);
 
             // Ramp texture system
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.UseRampTexture, useRampTexture ? 1f : 0f);
-            ToonShaderProperties.SetKeywordSafe(material, ToonShaderProperties.Keywords.UseRampTexture, useRampTexture);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.UseRampTexture, useRampTexture ? 1f : 0f);
+            GorgonizeToonShaderProperties.SetKeywordSafe(material, GorgonizeToonShaderProperties.Keywords.UseRampTexture, useRampTexture);
             
             if (useRampTexture && lightRampTexture != null)
             {
-                ToonShaderProperties.SetTextureSafe(material, ToonShaderProperties.LightRampTex, lightRampTexture);
+                GorgonizeToonShaderProperties.SetTextureSafe(material, GorgonizeToonShaderProperties.LightRampTex, lightRampTexture);
             }
 
             // Advanced lighting
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.IndirectLightingBoost, indirectLightingBoost);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.AmbientOcclusion, ambientOcclusion);
-            ToonShaderProperties.SetFloatSafe(material, ToonShaderProperties.LightWrapping, lightWrapping);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.IndirectLightingBoost, indirectLightingBoost);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.AmbientOcclusion, ambientOcclusion);
+            GorgonizeToonShaderProperties.SetFloatSafe(material, GorgonizeToonShaderProperties.LightWrapping, lightWrapping);
         }
 
         /// <summary>
         /// Creates a preset for anime-style lighting
         /// </summary>
-        public static ToonLightingSettings CreateAnimePreset()
+        public static GorgonizeToonLightingSettings CreateAnimePreset()
         {
-            return new ToonLightingSettings
+            return new GorgonizeToonLightingSettings
             {
                 shadowThreshold = 0.4f,
                 shadowSmoothness = 0.1f,
@@ -96,9 +96,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates a preset for cartoon-style lighting
         /// </summary>
-        public static ToonLightingSettings CreateCartoonPreset()
+        public static GorgonizeToonLightingSettings CreateCartoonPreset()
         {
-            return new ToonLightingSettings
+            return new GorgonizeToonLightingSettings
             {
                 shadowThreshold = 0.6f,
                 shadowSmoothness = 0.02f,
@@ -114,9 +114,9 @@ namespace Gorgonize.ToonShader.Settings
         /// <summary>
         /// Creates a preset for realistic toon lighting
         /// </summary>
-        public static ToonLightingSettings CreateRealisticPreset()
+        public static GorgonizeToonLightingSettings CreateRealisticPreset()
         {
-            return new ToonLightingSettings
+            return new GorgonizeToonLightingSettings
             {
                 shadowThreshold = 0.3f,
                 shadowSmoothness = 0.2f,
@@ -170,7 +170,7 @@ namespace Gorgonize.ToonShader.Settings
         /// Copy settings from another ToonLightingSettings instance
         /// </summary>
         /// <param name="other">Source settings to copy from</param>
-        public void CopyFrom(ToonLightingSettings other)
+        public void CopyFrom(GorgonizeToonLightingSettings other)
         {
             if (other == null) return;
 

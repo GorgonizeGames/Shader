@@ -2,6 +2,8 @@
 #define TOON_INPUT_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+// URP'nin yeni versiyonlarında bazı temel değişkenler bu dosyaya taşındı.
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
 // Vertex input structure
 struct ToonAttributes
@@ -22,35 +24,36 @@ struct ToonVaryings
     float2 uv : TEXCOORD0;
     float3 positionWS : TEXCOORD1;
     float3 normalWS : TEXCOORD2;
-    
+
     #ifdef _NORMALMAP
         float4 tangentWS : TEXCOORD3;
     #endif
-    
+
     float3 viewDirWS : TEXCOORD4;
-    
+
     #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
         float4 shadowCoord : TEXCOORD5;
     #endif
-    
+
     float fogCoord : TEXCOORD6;
-    
+
     #ifdef _ADDITIONAL_LIGHTS_VERTEX
         float3 vertexLighting : TEXCOORD7;
     #endif
-    
+
     #if defined(REQUIRES_TANGENT_SPACE_VIEW_DIR_INTERPOLATOR)
         float3 viewDirTS : TEXCOORD8;
     #endif
-    
-    #ifdef LIGHTMAP_ON
-        float2 staticLightmapUV : TEXCOORD9;
+
+    // Lightmap ve SH verilerini doğru şekilde aktarmak için güncellendi.
+    // DECLARE_LIGHTMAP_OR_SH makrosu zaten vertexSH'i tanımladığı için alttaki satır kaldırıldı.
+    DECLARE_LIGHTMAP_OR_SH(staticLightmapUV, vertexSH, 9);
+    #ifdef DYNAMICLIGHTMAP_ON
+        float2 dynamicLightmapUV : TEXCOORD10;
     #endif
-    
-    float3 vertexSH : TEXCOORD10;
-    
-    float4 screenPos : TEXCOORD11;
-    
+
+    float4 screenPos : TEXCOORD12;
+
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };

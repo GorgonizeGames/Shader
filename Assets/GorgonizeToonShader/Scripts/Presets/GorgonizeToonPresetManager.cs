@@ -7,7 +7,8 @@ namespace Gorgonize.ToonShader.Presets
     /// Preset data structure for storing complete shader configurations
     /// </summary>
     [System.Serializable]
-    public class ToonShaderPreset
+    [CreateAssetMenu(fileName = "New Toon Shader Preset", menuName = "Gorgonize/Toon Shader Preset")]
+    public class GorgonizeToonShaderPreset : ScriptableObject
     {
         [Header("Preset Info")]
         public string presetName = "Custom Preset";
@@ -16,27 +17,24 @@ namespace Gorgonize.ToonShader.Presets
         
         [Header("Settings")]
         public Color baseColor = Color.white;
-        public ToonLightingSettings lightingSettings = new ToonLightingSettings();
-        public ToonVisualEffects visualEffects = new ToonVisualEffects();
-        public ToonStylization stylization = new ToonStylization();
-        public ToonAnimationSettings animationSettings = new ToonAnimationSettings();
+        public GorgonizeToonLightingSettings lightingSettings = new GorgonizeToonLightingSettings();
+        public GorgonizeToonVisualEffects visualEffects = new GorgonizeToonVisualEffects();
+        public GorgonizeToonStylization stylization = new GorgonizeToonStylization();
+        public GorgonizeToonAnimationSettings animationSettings = new GorgonizeToonAnimationSettings();
         
         /// <summary>
         /// Applies this preset to a ToonMaterialController
         /// </summary>
-        public void ApplyToController(ToonMaterialController controller)
+        public void ApplyToController(GorgonizeToonMaterialController controller)
         {
             if (controller == null) return;
             
             controller.baseColor = baseColor;
             controller.lightingSettings.CopyFrom(lightingSettings);
-            controller.visualEffects.rimLighting.rimColor = visualEffects.rimLighting.rimColor;
-            controller.visualEffects.rimLighting.rimIntensity = visualEffects.rimLighting.rimIntensity;
-            controller.visualEffects.rimLighting.rimPower = visualEffects.rimLighting.rimPower;
-            controller.visualEffects.rimLighting.enableRimLighting = visualEffects.rimLighting.enableRimLighting;
-            // Copy other visual effects properties...
-            
+            controller.visualEffects.CopyFrom(visualEffects);
+            controller.stylization.CopyFrom(stylization);
             controller.animationSettings.CopyFrom(animationSettings);
+            
             controller.UpdateAllProperties();
         }
     }
@@ -44,45 +42,34 @@ namespace Gorgonize.ToonShader.Presets
     /// <summary>
     /// Manages shader presets and provides built-in configurations
     /// </summary>
-    public static class ToonPresetManager
+    public static class GorgonizeToonPresetManager
     {
         #region Built-in Presets
         
         /// <summary>
         /// Creates an anime-style preset
         /// </summary>
-        public static ToonShaderPreset CreateAnimePreset()
+        public static GorgonizeToonShaderPreset CreateAnimePreset()
         {
-            var preset = new ToonShaderPreset
-            {
-                presetName = "Anime Classic",
-                description = "Traditional anime/manga styling with smooth lighting and rim effects",
-                baseColor = Color.white
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Anime Classic";
+            preset.description = "Traditional anime/manga styling with smooth lighting and rim effects";
+            preset.baseColor = Color.white;
             
             // Lighting configuration
-            preset.lightingSettings = ToonLightingSettings.CreateAnimePreset();
+            preset.lightingSettings = GorgonizeToonLightingSettings.CreateAnimePreset();
             
             // Visual effects
-            preset.visualEffects.rimLighting.enableRimLighting = true;
-            preset.visualEffects.rimLighting.rimColor = new Color(1f, 0.95f, 0.8f, 1f);
-            preset.visualEffects.rimLighting.rimPower = 1.5f;
-            preset.visualEffects.rimLighting.rimIntensity = 2f;
-            preset.visualEffects.rimLighting.rimThreshold = 0.1f;
-            
-            preset.visualEffects.specular.enableSpecular = true;
-            preset.visualEffects.specular.specularColor = Color.white;
-            preset.visualEffects.specular.specularSize = 0.05f;
-            preset.visualEffects.specular.specularIntensity = 2f;
-            preset.visualEffects.specular.specularSmoothness = 0.02f;
+            preset.visualEffects = GorgonizeToonVisualEffects.CreateAnimePreset();
             
             // Stylization
+            preset.stylization = new GorgonizeToonStylization();
             preset.stylization.hatching.enableHatching = false;
             preset.stylization.colorGrading.saturation = 1.1f;
             preset.stylization.colorGrading.brightness = 1.05f;
             
             // Animation
-            preset.animationSettings = ToonAnimationSettings.CreateGentlePreset();
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateGentlePreset();
             
             return preset;
         }
@@ -90,33 +77,24 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Creates a cartoon-style preset
         /// </summary>
-        public static ToonShaderPreset CreateCartoonPreset()
+        public static GorgonizeToonShaderPreset CreateCartoonPreset()
         {
-            var preset = new ToonShaderPreset
-            {
-                presetName = "Cartoon Bold",
-                description = "Bold cartoon styling with hard shadows and strong contrasts",
-                baseColor = Color.white
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Cartoon Bold";
+            preset.description = "Bold cartoon styling with hard shadows and strong contrasts";
+            preset.baseColor = Color.white;
             
             // Lighting
-            preset.lightingSettings = ToonLightingSettings.CreateCartoonPreset();
+            preset.lightingSettings = GorgonizeToonLightingSettings.CreateCartoonPreset();
             
             // Visual effects
-            preset.visualEffects.rimLighting.enableRimLighting = true;
-            preset.visualEffects.rimLighting.rimColor = new Color(1f, 1f, 0.8f, 1f);
-            preset.visualEffects.rimLighting.rimIntensity = 3f;
-            preset.visualEffects.rimLighting.rimPower = 2f;
-            
-            preset.visualEffects.outline.enableOutline = true;
-            preset.visualEffects.outline.outlineColor = Color.black;
-            preset.visualEffects.outline.outlineWidth = 0.02f;
+            preset.visualEffects = GorgonizeToonVisualEffects.CreateCartoonPreset();
             
             // Stylization
-            preset.stylization.quantization.enableCelShading = true;
-            preset.stylization.quantization.celShadingSteps = 4f;
-            preset.stylization.colorGrading.contrast = 1.3f;
-            preset.stylization.colorGrading.saturation = 1.2f;
+            preset.stylization = GorgonizeToonStylization.CreateComicPreset();
+            
+            // Animation
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateStaticPreset();
             
             return preset;
         }
@@ -124,35 +102,30 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Creates a sketch-style preset
         /// </summary>
-        public static ToonShaderPreset CreateSketchPreset()
+        public static GorgonizeToonShaderPreset CreateSketchPreset()
         {
-            var preset = new ToonShaderPreset
-            {
-                presetName = "Sketch Style",
-                description = "Hand-drawn sketch appearance with hatching effects",
-                baseColor = Color.white
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Sketch Style";
+            preset.description = "Hand-drawn sketch appearance with hatching effects";
+            preset.baseColor = Color.white;
             
             // Lighting
+            preset.lightingSettings = new GorgonizeToonLightingSettings();
             preset.lightingSettings.shadowThreshold = 0.4f;
             preset.lightingSettings.shadowSmoothness = 0.05f;
             preset.lightingSettings.shadowColor = new Color(0.95f, 0.95f, 0.95f, 1f);
             
             // Visual effects
+            preset.visualEffects = new GorgonizeToonVisualEffects();
             preset.visualEffects.rimLighting.enableRimLighting = true;
             preset.visualEffects.rimLighting.rimIntensity = 1f;
             preset.visualEffects.rimLighting.rimColor = new Color(0.8f, 0.8f, 0.8f, 1f);
             
             // Stylization - Heavy hatching
-            preset.stylization.hatching.enableHatching = true;
-            preset.stylization.hatching.hatchingDensity = 2f;
-            preset.stylization.hatching.hatchingIntensity = 0.8f;
-            preset.stylization.hatching.hatchingThreshold = 0.6f;
-            preset.stylization.hatching.crossHatchingThreshold = 0.3f;
-            preset.stylization.hatching.hatchingRotation = 45f;
+            preset.stylization = GorgonizeToonStylization.CreateSketchPreset();
             
-            preset.stylization.colorGrading.saturation = 0.8f;
-            preset.stylization.colorGrading.contrast = 1.2f;
+            // Animation
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateStaticPreset();
             
             return preset;
         }
@@ -160,36 +133,27 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Creates a comic book style preset
         /// </summary>
-        public static ToonShaderPreset CreateComicPreset()
+        public static GorgonizeToonShaderPreset CreateComicPreset()
         {
-            var preset = new ToonShaderPreset
-            {
-                presetName = "Comic Book",
-                description = "Bold comic book styling with strong outlines and vibrant colors",
-                baseColor = Color.white
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Comic Book";
+            preset.description = "Bold comic book styling with strong outlines and vibrant colors";
+            preset.baseColor = Color.white;
             
             // Lighting
+            preset.lightingSettings = new GorgonizeToonLightingSettings();
             preset.lightingSettings.shadowThreshold = 0.5f;
             preset.lightingSettings.shadowSmoothness = 0.02f;
             preset.lightingSettings.shadowColor = new Color(0.3f, 0.3f, 0.5f, 1f);
             
             // Visual effects
-            preset.visualEffects.outline.enableOutline = true;
-            preset.visualEffects.outline.outlineColor = Color.black;
-            preset.visualEffects.outline.outlineWidth = 0.02f;
-            
-            preset.visualEffects.rimLighting.enableRimLighting = true;
-            preset.visualEffects.rimLighting.rimIntensity = 2.5f;
-            preset.visualEffects.rimLighting.rimColor = new Color(1f, 0.9f, 0.7f, 1f);
-            
-            preset.visualEffects.specular.enableSpecular = true;
-            preset.visualEffects.specular.specularIntensity = 3f;
-            preset.visualEffects.specular.specularSize = 0.03f;
+            preset.visualEffects = GorgonizeToonVisualEffects.CreateCartoonPreset();
             
             // Stylization
-            preset.stylization.colorGrading.saturation = 1.3f;
-            preset.stylization.colorGrading.contrast = 1.4f;
+            preset.stylization = GorgonizeToonStylization.CreateComicPreset();
+            
+            // Animation
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateStaticPreset();
             
             return preset;
         }
@@ -197,35 +161,30 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Creates a hatched drawing style preset
         /// </summary>
-        public static ToonShaderPreset CreateHatchedDrawingPreset()
+        public static GorgonizeToonShaderPreset CreateHatchedDrawingPreset()
         {
-            var preset = new ToonShaderPreset
-            {
-                presetName = "Hatched Drawing",
-                description = "Technical illustration style with extensive hatching effects",
-                baseColor = Color.white
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Hatched Drawing";
+            preset.description = "Technical illustration style with extensive hatching effects";
+            preset.baseColor = Color.white;
             
             // Lighting
+            preset.lightingSettings = new GorgonizeToonLightingSettings();
             preset.lightingSettings.shadowThreshold = 0.45f;
             preset.lightingSettings.shadowSmoothness = 0.1f;
             preset.lightingSettings.shadowColor = new Color(0.95f, 0.95f, 0.95f, 1f);
             
             // Stylization - Advanced hatching
-            preset.stylization.hatching.enableHatching = true;
-            preset.stylization.hatching.hatchingDensity = 1.5f;
-            preset.stylization.hatching.hatchingIntensity = 1.2f;
-            preset.stylization.hatching.hatchingThreshold = 0.7f;
-            preset.stylization.hatching.crossHatchingThreshold = 0.4f;
-            preset.stylization.hatching.hatchingRotation = 30f;
-            
+            preset.stylization = GorgonizeToonStylization.CreateSketchPreset();
             preset.stylization.hatching.enableScreenSpaceHatching = true;
             preset.stylization.hatching.screenHatchScale = 3f;
             preset.stylization.hatching.screenHatchBias = 0.2f;
             
-            preset.stylization.colorGrading.saturation = 0.7f;
-            preset.stylization.colorGrading.contrast = 1.3f;
-            preset.stylization.colorGrading.gamma = 1.2f;
+            // Visual effects
+            preset.visualEffects = new GorgonizeToonVisualEffects();
+            
+            // Animation
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateStaticPreset();
             
             return preset;
         }
@@ -233,30 +192,24 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Creates a realistic toon preset
         /// </summary>
-        public static ToonShaderPreset CreateRealisticToonPreset()
+        public static GorgonizeToonShaderPreset CreateRealisticToonPreset()
         {
-            var preset = new ToonShaderPreset
-            {
-                presetName = "Realistic Toon",
-                description = "Balanced approach between realism and stylization",
-                baseColor = Color.white
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Realistic Toon";
+            preset.description = "Balanced approach between realism and stylization";
+            preset.baseColor = Color.white;
             
             // Lighting
-            preset.lightingSettings = ToonLightingSettings.CreateRealisticPreset();
+            preset.lightingSettings = GorgonizeToonLightingSettings.CreateRealisticPreset();
             
             // Visual effects
-            preset.visualEffects.subsurface.enableSubsurface = true;
-            preset.visualEffects.subsurface.subsurfaceColor = new Color(1f, 0.7f, 0.7f, 1f);
-            preset.visualEffects.subsurface.subsurfaceIntensity = 0.3f;
-            preset.visualEffects.subsurface.subsurfacePower = 2f;
+            preset.visualEffects = GorgonizeToonVisualEffects.CreateRealisticPreset();
             
-            preset.visualEffects.fresnel.enableFresnel = true;
-            preset.visualEffects.fresnel.fresnelIntensity = 0.5f;
-            preset.visualEffects.fresnel.fresnelPower = 3f;
+            // Stylization
+            preset.stylization = new GorgonizeToonStylization();
             
-            preset.visualEffects.rimLighting.enableRimLighting = true;
-            preset.visualEffects.rimLighting.rimIntensity = 1.5f;
+            // Animation
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateGentlePreset();
             
             return preset;
         }
@@ -264,22 +217,22 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Creates a painterly style preset
         /// </summary>
-        public static ToonShaderPreset CreatePainterlyPreset()
+        public static GorgonizeToonShaderPreset CreatePainterlyPreset()
         {
-            var preset = new ToonShaderPreset
-            {
-                presetName = "Painterly",
-                description = "Artistic painted appearance with soft lighting",
-                baseColor = Color.white
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Painterly";
+            preset.description = "Artistic painted appearance with soft lighting";
+            preset.baseColor = Color.white;
             
             // Lighting
+            preset.lightingSettings = new GorgonizeToonLightingSettings();
             preset.lightingSettings.shadowThreshold = 0.35f;
             preset.lightingSettings.shadowSmoothness = 0.3f;
             preset.lightingSettings.shadowColor = new Color(0.6f, 0.7f, 0.8f, 1f);
             preset.lightingSettings.indirectLightingBoost = 0.4f;
             
             // Visual effects
+            preset.visualEffects = new GorgonizeToonVisualEffects();
             preset.visualEffects.matcap.enableMatcap = true;
             preset.visualEffects.matcap.matcapIntensity = 0.8f;
             preset.visualEffects.matcap.blendMode = MatcapBlendMode.Multiply;
@@ -289,8 +242,10 @@ namespace Gorgonize.ToonShader.Presets
             preset.visualEffects.fresnel.fresnelPower = 2f;
             
             // Stylization
-            preset.stylization.colorGrading.saturation = 1.1f;
-            preset.stylization.colorGrading.brightness = 1.1f;
+            preset.stylization = GorgonizeToonStylization.CreatePainterlyPreset();
+            
+            // Animation
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateGentlePreset();
             
             return preset;
         }
@@ -301,9 +256,9 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Gets all built-in presets
         /// </summary>
-        public static ToonShaderPreset[] GetBuiltInPresets()
+        public static GorgonizeToonShaderPreset[] GetBuiltInPresets()
         {
-            return new ToonShaderPreset[]
+            return new GorgonizeToonShaderPreset[]
             {
                 CreateAnimePreset(),
                 CreateCartoonPreset(),
@@ -334,7 +289,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Gets a preset by name
         /// </summary>
-        public static ToonShaderPreset GetPresetByName(string name)
+        public static GorgonizeToonShaderPreset GetPresetByName(string name)
         {
             var presets = GetBuiltInPresets();
             
@@ -352,7 +307,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Gets a preset by index
         /// </summary>
-        public static ToonShaderPreset GetPresetByIndex(int index)
+        public static GorgonizeToonShaderPreset GetPresetByIndex(int index)
         {
             var presets = GetBuiltInPresets();
             
@@ -367,23 +322,20 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Creates a preset from current controller settings
         /// </summary>
-        public static ToonShaderPreset CreatePresetFromController(ToonMaterialController controller, string presetName = "Custom Preset")
+        public static GorgonizeToonShaderPreset CreatePresetFromController(GorgonizeToonMaterialController controller, string presetName = "Custom Preset")
         {
             if (controller == null) return null;
             
-            var preset = new ToonShaderPreset
-            {
-                presetName = presetName,
-                description = "Custom configuration created from current settings",
-                baseColor = controller.baseColor
-            };
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = presetName;
+            preset.description = "Custom configuration created from current settings";
+            preset.baseColor = controller.baseColor;
             
             // Copy settings
             preset.lightingSettings.CopyFrom(controller.lightingSettings);
+            preset.visualEffects.CopyFrom(controller.visualEffects);
+            preset.stylization.CopyFrom(controller.stylization);
             preset.animationSettings.CopyFrom(controller.animationSettings);
-            
-            // Note: In a full implementation, you'd need to add copy methods to visual effects
-            // and stylization classes similar to what we have for lighting and animation
             
             return preset;
         }
@@ -391,7 +343,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Applies a preset to a material controller
         /// </summary>
-        public static void ApplyPreset(ToonMaterialController controller, ToonShaderPreset preset)
+        public static void ApplyPreset(GorgonizeToonMaterialController controller, GorgonizeToonShaderPreset preset)
         {
             if (controller == null || preset == null) return;
             
@@ -401,7 +353,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Applies a preset by name
         /// </summary>
-        public static void ApplyPresetByName(ToonMaterialController controller, string presetName)
+        public static void ApplyPresetByName(GorgonizeToonMaterialController controller, string presetName)
         {
             var preset = GetPresetByName(presetName);
             if (preset != null)
@@ -413,7 +365,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Applies a preset by index
         /// </summary>
-        public static void ApplyPresetByIndex(ToonMaterialController controller, int index)
+        public static void ApplyPresetByIndex(GorgonizeToonMaterialController controller, int index)
         {
             var preset = GetPresetByIndex(index);
             if (preset != null)
@@ -428,7 +380,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Validates a preset for completeness
         /// </summary>
-        public static bool ValidatePreset(ToonShaderPreset preset)
+        public static bool ValidatePreset(GorgonizeToonShaderPreset preset)
         {
             if (preset == null) return false;
             if (string.IsNullOrEmpty(preset.presetName)) return false;
@@ -443,7 +395,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Gets performance estimation for a preset
         /// </summary>
-        public static float EstimatePresetPerformance(ToonShaderPreset preset)
+        public static float EstimatePresetPerformance(GorgonizeToonShaderPreset preset)
         {
             if (preset == null) return 0f;
             
@@ -460,7 +412,7 @@ namespace Gorgonize.ToonShader.Presets
         /// <summary>
         /// Gets a performance category for a preset
         /// </summary>
-        public static string GetPerformanceCategory(ToonShaderPreset preset)
+        public static string GetPerformanceCategory(GorgonizeToonShaderPreset preset)
         {
             float cost = EstimatePresetPerformance(preset);
             
@@ -468,6 +420,115 @@ namespace Gorgonize.ToonShader.Presets
             if (cost < 0.6f) return "Medium";
             if (cost < 0.8f) return "Heavy";
             return "Ultra";
+        }
+        
+        /// <summary>
+        /// Creates a preset optimized for mobile platforms
+        /// </summary>
+        public static GorgonizeToonShaderPreset CreateMobileOptimizedPreset()
+        {
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "Mobile Optimized";
+            preset.description = "Lightweight preset optimized for mobile devices";
+            preset.baseColor = Color.white;
+            
+            // Basic lighting only
+            preset.lightingSettings = new GorgonizeToonLightingSettings();
+            preset.lightingSettings.shadowThreshold = 0.5f;
+            preset.lightingSettings.shadowSmoothness = 0.02f; // Hard shadows for performance
+            preset.lightingSettings.useRampTexture = false;
+            preset.lightingSettings.indirectLightingBoost = 0.2f;
+            
+            // Minimal visual effects
+            preset.visualEffects = GorgonizeToonVisualEffects.CreateMinimalPreset();
+            preset.visualEffects.rimLighting.enableRimLighting = true;
+            preset.visualEffects.rimLighting.rimIntensity = 1f;
+            
+            // No expensive stylization
+            preset.stylization = new GorgonizeToonStylization();
+            preset.stylization.hatching.enableHatching = false;
+            preset.stylization.hatching.enableScreenSpaceHatching = false;
+            preset.stylization.quantization.enablePosterize = false;
+            
+            // No animations for performance
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateStaticPreset();
+            
+            return preset;
+        }
+        
+        /// <summary>
+        /// Creates a high-quality preset for desktop/console
+        /// </summary>
+        public static GorgonizeToonShaderPreset CreateHighQualityPreset()
+        {
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "High Quality";
+            preset.description = "High-end preset with all features enabled for desktop/console";
+            preset.baseColor = Color.white;
+            
+            // Advanced lighting
+            preset.lightingSettings = GorgonizeToonLightingSettings.CreateRealisticPreset();
+            preset.lightingSettings.shadowSmoothness = 0.15f;
+            preset.lightingSettings.indirectLightingBoost = 0.6f;
+            
+            // All visual effects
+            preset.visualEffects = new GorgonizeToonVisualEffects();
+            preset.visualEffects.rimLighting.enableRimLighting = true;
+            preset.visualEffects.rimLighting.rimIntensity = 2f;
+            preset.visualEffects.specular.enableSpecular = true;
+            preset.visualEffects.matcap.enableMatcap = true;
+            preset.visualEffects.fresnel.enableFresnel = true;
+            preset.visualEffects.subsurface.enableSubsurface = true;
+            preset.visualEffects.specialEffects.enableForceField = false; // Keep disabled by default
+            
+            // Advanced stylization
+            preset.stylization = new GorgonizeToonStylization();
+            preset.stylization.hatching.enableHatching = true;
+            preset.stylization.hatching.enableScreenSpaceHatching = true;
+            preset.stylization.quantization.enablePosterize = true;
+            preset.stylization.quantization.posterizeLevels = 12f;
+            
+            // Dynamic animations
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateDynamicPreset();
+            
+            return preset;
+        }
+        
+        /// <summary>
+        /// Creates a VR-optimized preset
+        /// </summary>
+        public static GorgonizeToonShaderPreset CreateVROptimizedPreset()
+        {
+            var preset = ScriptableObject.CreateInstance<GorgonizeToonShaderPreset>();
+            preset.presetName = "VR Optimized";
+            preset.description = "Balanced preset optimized for VR rendering";
+            preset.baseColor = Color.white;
+            
+            // Medium quality lighting
+            preset.lightingSettings = new GorgonizeToonLightingSettings();
+            preset.lightingSettings.shadowThreshold = 0.45f;
+            preset.lightingSettings.shadowSmoothness = 0.05f;
+            preset.lightingSettings.indirectLightingBoost = 0.3f;
+            
+            // Basic visual effects
+            preset.visualEffects = new GorgonizeToonVisualEffects();
+            preset.visualEffects.rimLighting.enableRimLighting = true;
+            preset.visualEffects.rimLighting.rimIntensity = 1.5f;
+            preset.visualEffects.specular.enableSpecular = true;
+            preset.visualEffects.specular.specularIntensity = 1f;
+            preset.visualEffects.outline.enableOutline = true; // Good for VR clarity
+            preset.visualEffects.outline.outlineWidth = 0.015f;
+            
+            // Minimal stylization
+            preset.stylization = new GorgonizeToonStylization();
+            preset.stylization.hatching.enableHatching = false;
+            preset.stylization.quantization.enableCelShading = true;
+            preset.stylization.quantization.celShadingSteps = 3f;
+            
+            // Minimal animations to maintain framerate
+            preset.animationSettings = GorgonizeToonAnimationSettings.CreateGentlePreset();
+            
+            return preset;
         }
         #endregion
     }
