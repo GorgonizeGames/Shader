@@ -1,5 +1,5 @@
 {
-    "name": "Gorgonize.UltimateToonShader",
+    "name": "Gorgonize.ToonShader",
     "rootNamespace": "Gorgonize.ToonShader",
     "references": [
         "Unity.RenderPipelines.Universal.Runtime",
@@ -31,6 +31,11 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "16.0.0",
             "define": "URP_16_0_0_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "17.0.0",
+            "define": "URP_17_0_0_OR_NEWER"
         }
     ],
     "noEngineReferences": false
