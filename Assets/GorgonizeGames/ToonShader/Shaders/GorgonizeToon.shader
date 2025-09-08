@@ -214,7 +214,7 @@ Shader "GorgonizeGames/Toon Shader"
             #pragma fragment DepthOnlyFragment
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Include/DepthOnlyPass.hlsl"
+            #include "Assets/GorgonizeGames/ToonShader/Shaders/Include/DepthOnlyPass.hlsl"
             
             ENDHLSL
         }

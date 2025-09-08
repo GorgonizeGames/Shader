@@ -216,9 +216,7 @@ half4 ToonFragment(Varyings input) : SV_Target
             for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
             {
                 Light light = GetAdditionalLight(lightIndex, positionWS);
-                ToonLightingData additionalLighting = CalculateToonLighting(surfaceData, light, positionWS,
-                                                                          _ShadowColor, _HighlightColor, _ShadowBlendMode,
-                                                                          _ShadowIntensity, _LightSmoothness, _RampSteps);
+                ToonLightingData additionalLighting = CalculateToonLightingSimple(surfaceData, light, positionWS);
                 finalColor += additionalLighting.diffuse * 0.5; // Reduce intensity for additional lights
                 
                 #ifdef _ENABLE_SPECULAR

@@ -270,21 +270,12 @@ half3 ApplyGamma(half3 color, half gamma)
     return pow(color, 1.0 / gamma);
 }
 
-// Dithering patterns
+// Dithering patterns - simplified version
 half OrderedDithering(float2 screenPos, int size)
 {
-    int x = int(screenPos.x) % size;
-    int y = int(screenPos.y) % size;
-    
-    // 4x4 Bayer matrix
-    if (size == 4)
-    {
-        int pattern[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
-        return (float)pattern[y * 4 + x] / 16.0;
-    }
-    
-    // Fallback to simple pattern
-    return frac(sin(dot(screenPos, float2(12.9898, 78.233))) * 43758.5453);
+    // Simple dithering pattern without arrays
+    float2 uv = screenPos / (float)size;
+    return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
 }
 
 // Blue noise approximation

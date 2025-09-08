@@ -74,10 +74,8 @@ half3 ApplyShadowBlending(half3 baseColor, half3 shadowColor, half shadowMask, i
     return result;
 }
 
-// Enhanced toon lighting calculation with ramps and procedural gradients
-ToonLightingData CalculateToonLighting(ToonSurfaceData surfaceData, Light light, float3 positionWS, 
-                                      half4 shadowColor, half4 highlightColor, half shadowBlendMode, 
-                                      half shadowIntensity, half lightSmoothness, int rampSteps)
+// Simple version of CalculateToonLighting that uses properties directly
+ToonLightingData CalculateToonLightingSimple(ToonSurfaceData surfaceData, Light light, float3 positionWS)
 {
     ToonLightingData lightingData;
     
@@ -88,26 +86,14 @@ ToonLightingData CalculateToonLighting(ToonSurfaceData surfaceData, Light light,
     // Convert NdotL to 0-1 range for ramp sampling
     half lightValue = NdotL * 0.5 + 0.5;
     
-    // Apply light smoothness (soft transitions)
-    half smoothedLight = smoothstep(-lightSmoothness, lightSmoothness, NdotL);
+    // Simple toon lighting
+    half smoothedLight = step(0.0, NdotL);
     
-    half3 lightColor;
-    
-    #ifdef _USE_RAMP_SHADING
-        // Use ramp texture for lighting
-        lightColor = SampleRampTexture(lightValue);
-    #else
-        // Use procedural gradient based on steps
-        lightColor = ProceduralRampLighting(smoothedLight, rampSteps, shadowColor, highlightColor);
-    #endif
-    
-    // Apply shadow blending
-    half shadowMask = 1.0 - smoothedLight;
-    half3 finalAlbedo = ApplyShadowBlending(surfaceData.albedo, shadowColor.rgb, 
-                                           shadowMask * shadowIntensity, (int)shadowBlendMode);
+    // Simple color mixing
+    half3 lightColor = lerp(half3(0.5, 0.5, 0.8), half3(1, 1, 1), smoothedLight);
     
     // Combine with light color and attenuation
-    half3 diffuseColor = finalAlbedo * lightColor * light.color * lightAttenuation;
+    half3 diffuseColor = surfaceData.albedo * lightColor * light.color * lightAttenuation;
     
     // Store results
     lightingData.diffuse = diffuseColor;
