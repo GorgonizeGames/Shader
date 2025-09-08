@@ -1,566 +1,601 @@
 using UnityEngine;
 using UnityEditor;
+using System;
 
-namespace GorgonizeGames
+namespace GorgonizeGames.ToonShader
 {
+    /// <summary>
+    /// Custom Material Editor for GorgonizeGames Toon Shader
+    /// Provides an organized, user-friendly interface with conditional property display
+    /// </summary>
     public class ToonShaderGUI : ShaderGUI
     {
+        // Foldout states
+        private static bool showBaseSettings = true;
+        private static bool showLightingSettings = true;
+        private static bool showSpecularSettings = false;
+        private static bool showRimSettings = false;
+        private static bool showOutlineSettings = false;
+        private static bool showShadowSettings = false;
+        private static bool showEffectsSettings = false;
+        private static bool showEmissionSettings = false;
+        private static bool showRenderingSettings = false;
+
         // Property references
-        private MaterialProperty mainTex;
-        private MaterialProperty color;
+        private MaterialProperty baseMap;
+        private MaterialProperty baseColor;
         
-        // Lighting properties
-        private MaterialProperty useRampTexture;
-        private MaterialProperty rampTex;
+        // Lighting
+        private MaterialProperty useRampShading;
+        private MaterialProperty rampMap;
         private MaterialProperty rampSteps;
-        private MaterialProperty rampSmoothness;
         private MaterialProperty shadowColor;
         private MaterialProperty highlightColor;
         private MaterialProperty shadowBlendMode;
+        private MaterialProperty shadowIntensity;
+        private MaterialProperty lightSmoothness;
         
-        // Specular properties
+        // Specular
         private MaterialProperty enableSpecular;
-        private MaterialProperty specColor;
-        private MaterialProperty glossiness;
+        private MaterialProperty specularColor;
         private MaterialProperty specularSize;
-        private MaterialProperty enableAnisotropic;
-        private MaterialProperty anisotropyDirection;
+        private MaterialProperty specularSmoothness;
+        private MaterialProperty anisotropicSpecular;
+        private MaterialProperty anisotropy;
+        private MaterialProperty useMatCap;
+        private MaterialProperty matCapMap;
         
-        // MatCap properties
-        private MaterialProperty enableMatCap;
-        private MaterialProperty matCapTex;
-        private MaterialProperty matCapIntensity;
-        
-        // Rim properties
+        // Rim Lighting
         private MaterialProperty enableRim;
         private MaterialProperty rimColor;
         private MaterialProperty rimPower;
         private MaterialProperty rimIntensity;
-        private MaterialProperty enableRimSecondary;
-        private MaterialProperty rimColorSecondary;
-        private MaterialProperty rimPowerSecondary;
-        private MaterialProperty rimIntensitySecondary;
+        private MaterialProperty enableSecondaryRim;
+        private MaterialProperty secondaryRimColor;
+        private MaterialProperty secondaryRimPower;
+        private MaterialProperty secondaryRimIntensity;
+        private MaterialProperty lightBasedRim;
         
-        // Outline properties
+        // Outline
         private MaterialProperty enableOutline;
-        private MaterialProperty outlineColor;
         private MaterialProperty outlineWidth;
+        private MaterialProperty outlineColor;
         private MaterialProperty outlineDistanceFade;
+        private MaterialProperty cornerRounding;
+        private MaterialProperty cornerRoundness;
         
-        // Shadow properties
+        // Shadows
         private MaterialProperty stylizedShadows;
         private MaterialProperty shadowTint;
         private MaterialProperty shadowSharpness;
         private MaterialProperty shadowDithering;
+        private MaterialProperty ditherScale;
         
-        // Effects properties
+        // Effects
         private MaterialProperty enableHatching;
-        private MaterialProperty hatchingTex;
+        private MaterialProperty hatchingMap;
         private MaterialProperty hatchingScale;
         private MaterialProperty hatchingIntensity;
         private MaterialProperty enableDithering;
-        private MaterialProperty ditheringScale;
+        private MaterialProperty colorDitherScale;
+        
+        // Emission
         private MaterialProperty enableEmission;
         private MaterialProperty emissionMap;
         private MaterialProperty emissionColor;
         
-        // Advanced properties
-        private MaterialProperty mobileOptimized;
-        private MaterialProperty additionalLights;
+        // Mobile
+        private MaterialProperty mobileMode;
         
-        // Foldout states
-        private bool baseFoldout = true;
-        private bool lightingFoldout = true;
-        private bool specularFoldout = false;
-        private bool rimFoldout = false;
-        private bool outlineFoldout = false;
-        private bool shadowsFoldout = false;
-        private bool effectsFoldout = false;
-        private bool advancedFoldout = false;
-        
-        // GUI Styles
-        private static GUIStyle boldFoldoutStyle;
-        private static GUIStyle helpBoxStyle;
-        
+        // Rendering
+        private MaterialProperty cull;
+        private MaterialProperty srcBlend;
+        private MaterialProperty dstBlend;
+        private MaterialProperty zWrite;
+        private MaterialProperty zTest;
+
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
-            InitializeStyles();
+            // Find all properties
             FindProperties(properties);
             
             Material material = materialEditor.target as Material;
             
-            EditorGUI.BeginChangeCheck();
-            
             // Header
-            DrawHeader();
+            EditorGUILayout.Space();
+            GUILayout.Label("GorgonizeGames Toon Shader", EditorStyles.boldLabel);
+            GUILayout.Label("Unity URP Toon Shader with Advanced Features", EditorStyles.miniLabel);
+            EditorGUILayout.Space();
+            
+            // Quick Mobile Optimization Button
+            if (GUILayout.Button("Enable Mobile Optimizations"))
+            {
+                EnableMobileOptimizations(material);
+            }
+            
+            EditorGUILayout.Space();
             
             // Base Settings
-            DrawBaseSettings(materialEditor);
+            DrawBaseSettings(materialEditor, material);
             
             // Lighting Settings
-            DrawLightingSettings(materialEditor);
+            DrawLightingSettings(materialEditor, material);
             
             // Specular Settings
-            DrawSpecularSettings(materialEditor);
+            DrawSpecularSettings(materialEditor, material);
             
             // Rim Lighting Settings
-            DrawRimSettings(materialEditor);
+            DrawRimLightingSettings(materialEditor, material);
             
             // Outline Settings
-            DrawOutlineSettings(materialEditor);
+            DrawOutlineSettings(materialEditor, material);
             
             // Shadow Settings
-            DrawShadowSettings(materialEditor);
+            DrawShadowSettings(materialEditor, material);
             
             // Effects Settings
-            DrawEffectsSettings(materialEditor);
+            DrawEffectsSettings(materialEditor, material);
             
-            // Advanced Settings
-            DrawAdvancedSettings(materialEditor);
+            // Emission Settings
+            DrawEmissionSettings(materialEditor, material);
             
-            // Quick Setup Buttons
-            DrawQuickSetupButtons(material);
+            // Rendering Settings
+            DrawRenderingSettings(materialEditor, material);
             
-            if (EditorGUI.EndChangeCheck())
-            {
-                SetKeywords(material);
-            }
+            // Set shader keywords based on properties
+            SetMaterialKeywords(material);
         }
-        
-        private void InitializeStyles()
-        {
-            if (boldFoldoutStyle == null)
-            {
-                boldFoldoutStyle = new GUIStyle(EditorStyles.foldout)
-                {
-                    fontStyle = FontStyle.Bold,
-                    fontSize = 12
-                };
-            }
-            
-            if (helpBoxStyle == null)
-            {
-                helpBoxStyle = new GUIStyle(EditorStyles.helpBox)
-                {
-                    fontSize = 10,
-                    padding = new RectOffset(8, 8, 4, 4)
-                };
-            }
-        }
-        
+
         private void FindProperties(MaterialProperty[] properties)
         {
-            // Base properties
-            mainTex = FindProperty("_MainTex", properties);
-            color = FindProperty("_Color", properties);
+            baseMap = FindProperty("_BaseMap", properties);
+            baseColor = FindProperty("_BaseColor", properties);
             
-            // Lighting properties
-            useRampTexture = FindProperty("_UseRampTexture", properties);
-            rampTex = FindProperty("_RampTex", properties);
+            useRampShading = FindProperty("_UseRampShading", properties);
+            rampMap = FindProperty("_RampMap", properties);
             rampSteps = FindProperty("_RampSteps", properties);
-            rampSmoothness = FindProperty("_RampSmoothness", properties);
             shadowColor = FindProperty("_ShadowColor", properties);
             highlightColor = FindProperty("_HighlightColor", properties);
             shadowBlendMode = FindProperty("_ShadowBlendMode", properties);
+            shadowIntensity = FindProperty("_ShadowIntensity", properties);
+            lightSmoothness = FindProperty("_LightSmoothness", properties);
             
-            // Specular properties
             enableSpecular = FindProperty("_EnableSpecular", properties);
-            specColor = FindProperty("_SpecColor", properties);
-            glossiness = FindProperty("_Glossiness", properties);
+            specularColor = FindProperty("_SpecularColor", properties);
             specularSize = FindProperty("_SpecularSize", properties);
-            enableAnisotropic = FindProperty("_EnableAnisotropic", properties);
-            anisotropyDirection = FindProperty("_AnisotropyDirection", properties);
+            specularSmoothness = FindProperty("_SpecularSmoothness", properties);
+            anisotropicSpecular = FindProperty("_AnisotropicSpecular", properties);
+            anisotropy = FindProperty("_Anisotropy", properties);
+            useMatCap = FindProperty("_UseMatCap", properties);
+            matCapMap = FindProperty("_MatCapMap", properties);
             
-            // MatCap properties
-            enableMatCap = FindProperty("_EnableMatCap", properties);
-            matCapTex = FindProperty("_MatCapTex", properties);
-            matCapIntensity = FindProperty("_MatCapIntensity", properties);
-            
-            // Rim properties
             enableRim = FindProperty("_EnableRim", properties);
             rimColor = FindProperty("_RimColor", properties);
             rimPower = FindProperty("_RimPower", properties);
             rimIntensity = FindProperty("_RimIntensity", properties);
-            enableRimSecondary = FindProperty("_EnableRimSecondary", properties);
-            rimColorSecondary = FindProperty("_RimColorSecondary", properties);
-            rimPowerSecondary = FindProperty("_RimPowerSecondary", properties);
-            rimIntensitySecondary = FindProperty("_RimIntensitySecondary", properties);
+            enableSecondaryRim = FindProperty("_EnableSecondaryRim", properties);
+            secondaryRimColor = FindProperty("_SecondaryRimColor", properties);
+            secondaryRimPower = FindProperty("_SecondaryRimPower", properties);
+            secondaryRimIntensity = FindProperty("_SecondaryRimIntensity", properties);
+            lightBasedRim = FindProperty("_LightBasedRim", properties);
             
-            // Outline properties
             enableOutline = FindProperty("_EnableOutline", properties);
-            outlineColor = FindProperty("_OutlineColor", properties);
             outlineWidth = FindProperty("_OutlineWidth", properties);
+            outlineColor = FindProperty("_OutlineColor", properties);
             outlineDistanceFade = FindProperty("_OutlineDistanceFade", properties);
+            cornerRounding = FindProperty("_CornerRounding", properties);
+            cornerRoundness = FindProperty("_CornerRoundness", properties);
             
-            // Shadow properties
             stylizedShadows = FindProperty("_StylizedShadows", properties);
             shadowTint = FindProperty("_ShadowTint", properties);
             shadowSharpness = FindProperty("_ShadowSharpness", properties);
             shadowDithering = FindProperty("_ShadowDithering", properties);
+            ditherScale = FindProperty("_DitherScale", properties);
             
-            // Effects properties
             enableHatching = FindProperty("_EnableHatching", properties);
-            hatchingTex = FindProperty("_HatchingTex", properties);
+            hatchingMap = FindProperty("_HatchingMap", properties);
             hatchingScale = FindProperty("_HatchingScale", properties);
             hatchingIntensity = FindProperty("_HatchingIntensity", properties);
             enableDithering = FindProperty("_EnableDithering", properties);
-            ditheringScale = FindProperty("_DitheringScale", properties);
+            colorDitherScale = FindProperty("_ColorDitherScale", properties);
+            
             enableEmission = FindProperty("_EnableEmission", properties);
             emissionMap = FindProperty("_EmissionMap", properties);
             emissionColor = FindProperty("_EmissionColor", properties);
             
-            // Advanced properties
-            mobileOptimized = FindProperty("_MobileOptimized", properties);
-            additionalLights = FindProperty("_AdditionalLights", properties);
+            mobileMode = FindProperty("_MobileMode", properties);
+            
+            cull = FindProperty("_Cull", properties);
+            srcBlend = FindProperty("_SrcBlend", properties);
+            dstBlend = FindProperty("_DstBlend", properties);
+            zWrite = FindProperty("_ZWrite", properties);
+            zTest = FindProperty("_ZTest", properties);
         }
-        
-        private void DrawHeader()
+
+        private void DrawBaseSettings(MaterialEditor materialEditor, Material material)
         {
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("GorgonizeGames Toon Shader", EditorStyles.largeLabel);
-            EditorGUILayout.LabelField("Professional Toon Rendering for URP", EditorStyles.miniLabel);
-            EditorGUILayout.Space();
-        }
-        
-        private void DrawBaseSettings(MaterialEditor materialEditor)
-        {
-            baseFoldout = EditorGUILayout.Foldout(baseFoldout, "Base Settings", boldFoldoutStyle);
-            if (baseFoldout)
+            showBaseSettings = EditorGUILayout.Foldout(showBaseSettings, "Base Settings", true);
+            if (showBaseSettings)
             {
                 EditorGUI.indentLevel++;
                 
-                materialEditor.TexturePropertySingleLine(
-                    new GUIContent("Base Color", "Main texture and color tint"), 
-                    mainTex, color);
+                materialEditor.TexturePropertySingleLine(new GUIContent("Base Map"), baseMap, baseColor);
                 
                 EditorGUI.indentLevel--;
-                EditorGUILayout.Space();
             }
         }
-        
-        private void DrawLightingSettings(MaterialEditor materialEditor)
+
+        private void DrawLightingSettings(MaterialEditor materialEditor, Material material)
         {
-            lightingFoldout = EditorGUILayout.Foldout(lightingFoldout, "Lighting", boldFoldoutStyle);
-            if (lightingFoldout)
+            showLightingSettings = EditorGUILayout.Foldout(showLightingSettings, "Lighting Settings", true);
+            if (showLightingSettings)
             {
                 EditorGUI.indentLevel++;
                 
-                // Ramp Settings
-                materialEditor.ShaderProperty(useRampTexture, "Use Ramp Texture");
+                materialEditor.ShaderProperty(useRampShading, "Use Ramp Shading");
                 
-                if (useRampTexture.floatValue > 0.5f)
+                if (useRampShading.floatValue > 0.5f)
                 {
-                    EditorGUI.indentLevel++;
-                    materialEditor.TexturePropertySingleLine(
-                        new GUIContent("Ramp Texture", "1D gradient texture for lighting ramp"),
-                        rampTex);
-                    EditorGUI.indentLevel--;
+                    materialEditor.TexturePropertySingleLine(new GUIContent("Ramp Map"), rampMap);
+                    EditorGUILayout.HelpBox("Use a 1D ramp texture for custom lighting transitions.", MessageType.Info);
                 }
                 else
                 {
-                    EditorGUI.indentLevel++;
-                    materialEditor.ShaderProperty(rampSteps, "Ramp Steps");
-                    materialEditor.ShaderProperty(rampSmoothness, "Ramp Smoothness");
-                    EditorGUI.indentLevel--;
+                    materialEditor.ShaderProperty(rampSteps, "Ramp Steps (Procedural)");
+                    EditorGUILayout.HelpBox("Procedural gradient with 2-5 color steps.", MessageType.Info);
                 }
                 
-                // Shadow and Highlight Colors
                 materialEditor.ShaderProperty(shadowColor, "Shadow Color");
                 materialEditor.ShaderProperty(highlightColor, "Highlight Color");
-                
-                // Shadow Blend Mode
-                string[] blendModeNames = { "Multiply", "Additive", "Replace" };
-                shadowBlendMode.floatValue = EditorGUILayout.Popup(
-                    "Shadow Blend Mode", 
-                    (int)shadowBlendMode.floatValue, 
-                    blendModeNames);
+                materialEditor.ShaderProperty(shadowBlendMode, "Shadow Blend Mode");
+                materialEditor.ShaderProperty(shadowIntensity, "Shadow Intensity");
+                materialEditor.ShaderProperty(lightSmoothness, "Light Smoothness");
                 
                 EditorGUI.indentLevel--;
-                EditorGUILayout.Space();
             }
         }
-        
-        private void DrawSpecularSettings(MaterialEditor materialEditor)
+
+        private void DrawSpecularSettings(MaterialEditor materialEditor, Material material)
         {
-            specularFoldout = EditorGUILayout.Foldout(specularFoldout, "Specular & MatCap", boldFoldoutStyle);
-            if (specularFoldout)
+            showSpecularSettings = EditorGUILayout.Foldout(showSpecularSettings, "Specular Settings", true);
+            if (showSpecularSettings)
             {
                 EditorGUI.indentLevel++;
                 
-                // Specular
                 materialEditor.ShaderProperty(enableSpecular, "Enable Specular");
+                
                 if (enableSpecular.floatValue > 0.5f)
                 {
-                    EditorGUI.indentLevel++;
-                    materialEditor.ShaderProperty(specColor, "Specular Color");
-                    materialEditor.ShaderProperty(glossiness, "Glossiness");
+                    materialEditor.ShaderProperty(specularColor, "Specular Color");
                     materialEditor.ShaderProperty(specularSize, "Specular Size");
+                    materialEditor.ShaderProperty(specularSmoothness, "Specular Smoothness");
                     
-                    materialEditor.ShaderProperty(enableAnisotropic, "Enable Anisotropic");
-                    if (enableAnisotropic.floatValue > 0.5f)
+                    materialEditor.ShaderProperty(anisotropicSpecular, "Anisotropic Specular");
+                    if (anisotropicSpecular.floatValue > 0.5f)
                     {
-                        materialEditor.ShaderProperty(anisotropyDirection, "Anisotropy Direction");
+                        materialEditor.ShaderProperty(anisotropy, "Anisotropy");
+                        EditorGUILayout.HelpBox("Great for hair and fabric materials.", MessageType.Info);
                     }
-                    EditorGUI.indentLevel--;
-                }
-                
-                EditorGUILayout.Space(5);
-                
-                // MatCap
-                materialEditor.ShaderProperty(enableMatCap, "Enable MatCap");
-                if (enableMatCap.floatValue > 0.5f)
-                {
-                    EditorGUI.indentLevel++;
-                    materialEditor.TexturePropertySingleLine(
-                        new GUIContent("MatCap Texture", "Spherical environment map"),
-                        matCapTex);
-                    materialEditor.ShaderProperty(matCapIntensity, "MatCap Intensity");
-                    EditorGUI.indentLevel--;
+                    
+                    materialEditor.ShaderProperty(useMatCap, "Use MatCap");
+                    if (useMatCap.floatValue > 0.5f)
+                    {
+                        materialEditor.TexturePropertySingleLine(new GUIContent("MatCap Map"), matCapMap);
+                        EditorGUILayout.HelpBox("MatCap provides fake reflections for better performance.", MessageType.Info);
+                    }
                 }
                 
                 EditorGUI.indentLevel--;
-                EditorGUILayout.Space();
             }
         }
-        
-        private void DrawRimSettings(MaterialEditor materialEditor)
+
+        private void DrawRimLightingSettings(MaterialEditor materialEditor, Material material)
         {
-            rimFoldout = EditorGUILayout.Foldout(rimFoldout, "Rim Lighting", boldFoldoutStyle);
-            if (rimFoldout)
+            showRimSettings = EditorGUILayout.Foldout(showRimSettings, "Rim Lighting Settings", true);
+            if (showRimSettings)
             {
                 EditorGUI.indentLevel++;
                 
                 materialEditor.ShaderProperty(enableRim, "Enable Rim Lighting");
+                
                 if (enableRim.floatValue > 0.5f)
                 {
-                    EditorGUI.indentLevel++;
-                    materialEditor.ShaderProperty(rimColor, "Rim Color");
-                    materialEditor.ShaderProperty(rimPower, "Rim Power");
-                    materialEditor.ShaderProperty(rimIntensity, "Rim Intensity");
+                    materialEditor.ShaderProperty(rimColor, "Primary Rim Color");
+                    materialEditor.ShaderProperty(rimPower, "Primary Rim Power");
+                    materialEditor.ShaderProperty(rimIntensity, "Primary Rim Intensity");
                     
-                    EditorGUILayout.Space(5);
-                    
-                    materialEditor.ShaderProperty(enableRimSecondary, "Enable Secondary Rim");
-                    if (enableRimSecondary.floatValue > 0.5f)
+                    materialEditor.ShaderProperty(enableSecondaryRim, "Enable Secondary Rim");
+                    if (enableSecondaryRim.floatValue > 0.5f)
                     {
-                        materialEditor.ShaderProperty(rimColorSecondary, "Secondary Rim Color");
-                        materialEditor.ShaderProperty(rimPowerSecondary, "Secondary Rim Power");
-                        materialEditor.ShaderProperty(rimIntensitySecondary, "Secondary Rim Intensity");
+                        materialEditor.ShaderProperty(secondaryRimColor, "Secondary Rim Color");
+                        materialEditor.ShaderProperty(secondaryRimPower, "Secondary Rim Power");
+                        materialEditor.ShaderProperty(secondaryRimIntensity, "Secondary Rim Intensity");
                     }
-                    EditorGUI.indentLevel--;
+                    
+                    materialEditor.ShaderProperty(lightBasedRim, "Light Based Rim");
+                    if (lightBasedRim.floatValue > 0.5f)
+                    {
+                        EditorGUILayout.HelpBox("Rim lighting will be influenced by light direction.", MessageType.Info);
+                    }
                 }
                 
                 EditorGUI.indentLevel--;
-                EditorGUILayout.Space();
             }
         }
-        
-        private void DrawOutlineSettings(MaterialEditor materialEditor)
+
+        private void DrawOutlineSettings(MaterialEditor materialEditor, Material material)
         {
-            outlineFoldout = EditorGUILayout.Foldout(outlineFoldout, "Outline", boldFoldoutStyle);
-            if (outlineFoldout)
+            showOutlineSettings = EditorGUILayout.Foldout(showOutlineSettings, "Outline Settings", true);
+            if (showOutlineSettings)
             {
                 EditorGUI.indentLevel++;
                 
                 materialEditor.ShaderProperty(enableOutline, "Enable Outline");
+                
                 if (enableOutline.floatValue > 0.5f)
                 {
-                    EditorGUI.indentLevel++;
-                    materialEditor.ShaderProperty(outlineColor, "Outline Color");
                     materialEditor.ShaderProperty(outlineWidth, "Outline Width");
+                    materialEditor.ShaderProperty(outlineColor, "Outline Color");
                     materialEditor.ShaderProperty(outlineDistanceFade, "Distance Fade");
                     
-                    EditorGUILayout.HelpBox(
-                        "Outline uses the Inverted Hull method. For post-processing outlines, use the GorgonizeToon Renderer Feature.",
-                        MessageType.Info);
-                    EditorGUI.indentLevel--;
+                    materialEditor.ShaderProperty(cornerRounding, "Corner Rounding");
+                    if (cornerRounding.floatValue > 0.5f)
+                    {
+                        materialEditor.ShaderProperty(cornerRoundness, "Corner Roundness");
+                    }
+                    
+                    EditorGUILayout.HelpBox("Uses Inverted Hull technique for consistent outline rendering.", MessageType.Info);
                 }
                 
                 EditorGUI.indentLevel--;
-                EditorGUILayout.Space();
             }
         }
-        
-        private void DrawShadowSettings(MaterialEditor materialEditor)
+
+        private void DrawShadowSettings(MaterialEditor materialEditor, Material material)
         {
-            shadowsFoldout = EditorGUILayout.Foldout(shadowsFoldout, "Shadows", boldFoldoutStyle);
-            if (shadowsFoldout)
+            showShadowSettings = EditorGUILayout.Foldout(showShadowSettings, "Shadow Settings", true);
+            if (showShadowSettings)
             {
                 EditorGUI.indentLevel++;
                 
                 materialEditor.ShaderProperty(stylizedShadows, "Stylized Shadows");
+                
                 if (stylizedShadows.floatValue > 0.5f)
                 {
-                    EditorGUI.indentLevel++;
                     materialEditor.ShaderProperty(shadowTint, "Shadow Tint");
                     materialEditor.ShaderProperty(shadowSharpness, "Shadow Sharpness");
-                    EditorGUI.indentLevel--;
+                    
+                    materialEditor.ShaderProperty(shadowDithering, "Shadow Dithering");
+                    if (shadowDithering.floatValue > 0.5f)
+                    {
+                        materialEditor.ShaderProperty(ditherScale, "Dither Scale");
+                        EditorGUILayout.HelpBox("Dithering creates smoother shadow transitions.", MessageType.Info);
+                    }
                 }
                 
-                materialEditor.ShaderProperty(shadowDithering, "Shadow Dithering");
-                
                 EditorGUI.indentLevel--;
-                EditorGUILayout.Space();
             }
         }
-        
-        private void DrawEffectsSettings(MaterialEditor materialEditor)
+
+        private void DrawEffectsSettings(MaterialEditor materialEditor, Material material)
         {
-            effectsFoldout = EditorGUILayout.Foldout(effectsFoldout, "Effects", boldFoldoutStyle);
-            if (effectsFoldout)
+            showEffectsSettings = EditorGUILayout.Foldout(showEffectsSettings, "Effects Settings", true);
+            if (showEffectsSettings)
             {
                 EditorGUI.indentLevel++;
                 
-                // Hatching
                 materialEditor.ShaderProperty(enableHatching, "Enable Hatching");
                 if (enableHatching.floatValue > 0.5f)
                 {
-                    EditorGUI.indentLevel++;
-                    materialEditor.TexturePropertySingleLine(
-                        new GUIContent("Hatching Texture", "Texture for hatching pattern"),
-                        hatchingTex);
+                    materialEditor.TexturePropertySingleLine(new GUIContent("Hatching Map"), hatchingMap);
                     materialEditor.ShaderProperty(hatchingScale, "Hatching Scale");
                     materialEditor.ShaderProperty(hatchingIntensity, "Hatching Intensity");
-                    EditorGUI.indentLevel--;
+                    EditorGUILayout.HelpBox("Use RGB channels for different hatching densities.", MessageType.Info);
                 }
                 
-                EditorGUILayout.Space(5);
-                
-                // Dithering
-                materialEditor.ShaderProperty(enableDithering, "Enable Dithering");
+                materialEditor.ShaderProperty(enableDithering, "Enable Color Dithering");
                 if (enableDithering.floatValue > 0.5f)
                 {
-                    EditorGUI.indentLevel++;
-                    materialEditor.ShaderProperty(ditheringScale, "Dithering Scale");
-                    EditorGUI.indentLevel--;
-                }
-                
-                EditorGUILayout.Space(5);
-                
-                // Emission
-                materialEditor.ShaderProperty(enableEmission, "Enable Emission");
-                if (enableEmission.floatValue > 0.5f)
-                {
-                    EditorGUI.indentLevel++;
-                    materialEditor.TexturePropertySingleLine(
-                        new GUIContent("Emission Map", "Emission texture"),
-                        emissionMap, emissionColor);
-                    EditorGUI.indentLevel--;
+                    materialEditor.ShaderProperty(colorDitherScale, "Color Dither Scale");
                 }
                 
                 EditorGUI.indentLevel--;
-                EditorGUILayout.Space();
             }
         }
-        
-        private void DrawAdvancedSettings(MaterialEditor materialEditor)
+
+        private void DrawEmissionSettings(MaterialEditor materialEditor, Material material)
         {
-            advancedFoldout = EditorGUILayout.Foldout(advancedFoldout, "Advanced", boldFoldoutStyle);
-            if (advancedFoldout)
+            showEmissionSettings = EditorGUILayout.Foldout(showEmissionSettings, "Emission Settings", true);
+            if (showEmissionSettings)
             {
                 EditorGUI.indentLevel++;
                 
-                materialEditor.ShaderProperty(mobileOptimized, "Mobile Optimized");
-                materialEditor.ShaderProperty(additionalLights, "Additional Lights");
+                materialEditor.ShaderProperty(enableEmission, "Enable Emission");
                 
-                EditorGUILayout.HelpBox(
-                    "Mobile Optimized mode disables some features for better performance on mobile devices.",
-                    MessageType.Info);
+                if (enableEmission.floatValue > 0.5f)
+                {
+                    materialEditor.TexturePropertySingleLine(new GUIContent("Emission Map"), emissionMap);
+                    materialEditor.ShaderProperty(emissionColor, "Emission Color");
+                }
                 
                 EditorGUI.indentLevel--;
+            }
+        }
+
+        private void DrawRenderingSettings(MaterialEditor materialEditor, Material material)
+        {
+            showRenderingSettings = EditorGUILayout.Foldout(showRenderingSettings, "Rendering Settings", true);
+            if (showRenderingSettings)
+            {
+                EditorGUI.indentLevel++;
+                
+                materialEditor.ShaderProperty(mobileMode, "Mobile Mode");
+                if (mobileMode.floatValue > 0.5f)
+                {
+                    EditorGUILayout.HelpBox("Mobile mode reduces shader complexity for better performance.", MessageType.Info);
+                }
+                
                 EditorGUILayout.Space();
+                
+                materialEditor.ShaderProperty(cull, "Cull Mode");
+                materialEditor.ShaderProperty(srcBlend, "Src Blend");
+                materialEditor.ShaderProperty(dstBlend, "Dst Blend");
+                materialEditor.ShaderProperty(zWrite, "ZWrite");
+                materialEditor.ShaderProperty(zTest, "ZTest");
+                
+                EditorGUI.indentLevel--;
             }
         }
-        
-        private void DrawQuickSetupButtons(Material material)
+
+        private void EnableMobileOptimizations(Material material)
         {
-            EditorGUILayout.LabelField("Quick Setup", EditorStyles.boldLabel);
+            // Enable mobile mode
+            material.SetFloat("_MobileMode", 1.0f);
             
-            EditorGUILayout.BeginHorizontal();
+            // Disable expensive features
+            material.SetFloat("_EnableSpecular", 0.0f);
+            material.SetFloat("_EnableSecondaryRim", 0.0f);
+            material.SetFloat("_ShadowDithering", 0.0f);
+            material.SetFloat("_EnableHatching", 0.0f);
+            material.SetFloat("_EnableDithering", 0.0f);
+            material.SetFloat("_CornerRounding", 0.0f);
             
-            if (GUILayout.Button("Character Setup"))
+            // Reduce outline width
+            if (material.GetFloat("_EnableOutline") > 0.5f)
             {
-                SetupForCharacter(material);
+                material.SetFloat("_OutlineWidth", Mathf.Min(material.GetFloat("_OutlineWidth"), 0.005f));
             }
             
-            if (GUILayout.Button("Environment Setup"))
-            {
-                SetupForEnvironment(material);
-            }
+            // Simplify lighting
+            material.SetFloat("_UseRampShading", 0.0f);
+            material.SetFloat("_RampSteps", 3.0f);
             
-            if (GUILayout.Button("Mobile Setup"))
-            {
-                SetupForMobile(material);
-            }
+            EditorUtility.SetDirty(material);
+            Debug.Log("Mobile optimizations applied to " + material.name);
+        }
+
+        private void SetMaterialKeywords(Material material)
+        {
+            // Lighting keywords
+            SetKeyword(material, "_USE_RAMP_SHADING", material.GetFloat("_UseRampShading") > 0.5f);
             
-            EditorGUILayout.EndHorizontal();
+            // Specular keywords
+            SetKeyword(material, "_ENABLE_SPECULAR", material.GetFloat("_EnableSpecular") > 0.5f);
+            SetKeyword(material, "_ANISOTROPIC_SPECULAR", material.GetFloat("_AnisotropicSpecular") > 0.5f);
+            SetKeyword(material, "_USE_MATCAP", material.GetFloat("_UseMatCap") > 0.5f);
             
-            EditorGUILayout.Space();
+            // Rim lighting keywords
+            SetKeyword(material, "_ENABLE_RIM", material.GetFloat("_EnableRim") > 0.5f);
+            SetKeyword(material, "_ENABLE_SECONDARY_RIM", material.GetFloat("_EnableSecondaryRim") > 0.5f);
+            SetKeyword(material, "_LIGHT_BASED_RIM", material.GetFloat("_LightBasedRim") > 0.5f);
+            
+            // Outline keywords
+            SetKeyword(material, "_ENABLE_OUTLINE", material.GetFloat("_EnableOutline") > 0.5f);
+            SetKeyword(material, "_CORNER_ROUNDING", material.GetFloat("_CornerRounding") > 0.5f);
+            
+            // Shadow keywords
+            SetKeyword(material, "_STYLIZED_SHADOWS", material.GetFloat("_StylizedShadows") > 0.5f);
+            SetKeyword(material, "_SHADOW_DITHERING", material.GetFloat("_ShadowDithering") > 0.5f);
+            
+            // Effects keywords
+            SetKeyword(material, "_ENABLE_HATCHING", material.GetFloat("_EnableHatching") > 0.5f);
+            SetKeyword(material, "_ENABLE_DITHERING", material.GetFloat("_EnableDithering") > 0.5f);
+            
+            // Emission keywords
+            SetKeyword(material, "_EMISSION", material.GetFloat("_EnableEmission") > 0.5f);
+            
+            // Mobile keywords
+            SetKeyword(material, "_MOBILE_MODE", material.GetFloat("_MobileMode") > 0.5f);
         }
-        
-        private void SetupForCharacter(Material material)
-        {
-            // Character-focused setup
-            material.SetFloat("_EnableSpecular", 1f);
-            material.SetFloat("_EnableRim", 1f);
-            material.SetFloat("_EnableOutline", 1f);
-            material.SetFloat("_StylizedShadows", 1f);
-            material.SetFloat("_RimPower", 2f);
-            material.SetColor("_RimColor", new Color(1f, 0.8f, 0.6f, 1f));
-            material.SetFloat("_OutlineWidth", 0.003f);
-            material.SetColor("_OutlineColor", Color.black);
-        }
-        
-        private void SetupForEnvironment(Material material)
-        {
-            // Environment-focused setup
-            material.SetFloat("_EnableSpecular", 0f);
-            material.SetFloat("_EnableRim", 0f);
-            material.SetFloat("_EnableOutline", 0f);
-            material.SetFloat("_EnableHatching", 1f);
-            material.SetFloat("_StylizedShadows", 1f);
-            material.SetFloat("_HatchingScale", 2f);
-            material.SetFloat("_HatchingIntensity", 0.5f);
-        }
-        
-        private void SetupForMobile(Material material)
-        {
-            // Mobile-optimized setup
-            material.SetFloat("_MobileOptimized", 1f);
-            material.SetFloat("_AdditionalLights", 0f);
-            material.SetFloat("_EnableSpecular", 0f);
-            material.SetFloat("_EnableMatCap", 0f);
-            material.SetFloat("_EnableRimSecondary", 0f);
-            material.SetFloat("_EnableAnisotropic", 0f);
-            material.SetFloat("_EnableHatching", 0f);
-            material.SetFloat("_EnableDithering", 0f);
-            material.SetFloat("_ShadowDithering", 0f);
-        }
-        
-        private void SetKeywords(Material material)
-        {
-            // Set shader keywords based on material properties
-            SetKeyword(material, "USE_RAMP_TEXTURE", material.GetFloat("_UseRampTexture") > 0.5f);
-            SetKeyword(material, "ENABLE_SPECULAR", material.GetFloat("_EnableSpecular") > 0.5f);
-            SetKeyword(material, "ENABLE_ANISOTROPIC", material.GetFloat("_EnableAnisotropic") > 0.5f);
-            SetKeyword(material, "ENABLE_MATCAP", material.GetFloat("_EnableMatCap") > 0.5f);
-            SetKeyword(material, "ENABLE_RIM", material.GetFloat("_EnableRim") > 0.5f);
-            SetKeyword(material, "ENABLE_RIM_SECONDARY", material.GetFloat("_EnableRimSecondary") > 0.5f);
-            SetKeyword(material, "ENABLE_OUTLINE", material.GetFloat("_EnableOutline") > 0.5f);
-            SetKeyword(material, "STYLIZED_SHADOWS", material.GetFloat("_StylizedShadows") > 0.5f);
-            SetKeyword(material, "SHADOW_DITHERING", material.GetFloat("_ShadowDithering") > 0.5f);
-            SetKeyword(material, "ENABLE_HATCHING", material.GetFloat("_EnableHatching") > 0.5f);
-            SetKeyword(material, "ENABLE_DITHERING", material.GetFloat("_EnableDithering") > 0.5f);
-            SetKeyword(material, "ENABLE_EMISSION", material.GetFloat("_EnableEmission") > 0.5f);
-            SetKeyword(material, "MOBILE_OPTIMIZED", material.GetFloat("_MobileOptimized") > 0.5f);
-        }
-        
+
         private void SetKeyword(Material material, string keyword, bool state)
         {
             if (state)
                 material.EnableKeyword(keyword);
             else
                 material.DisableKeyword(keyword);
+        }
+    }
+
+    /// <summary>
+    /// Custom Ramp Texture Creator Window
+    /// Allows users to create ramp textures directly in the editor
+    /// </summary>
+    public class RampTextureCreator : EditorWindow
+    {
+        private Gradient gradient = new Gradient();
+        private int textureWidth = 256;
+        private int textureHeight = 4;
+        private string savePath = "Assets/";
+
+        [MenuItem("GorgonizeGames/Toon Shader/Create Ramp Texture")]
+        public static void ShowWindow()
+        {
+            GetWindow<RampTextureCreator>("Ramp Texture Creator");
+        }
+
+        private void OnGUI()
+        {
+            GUILayout.Label("Ramp Texture Creator", EditorStyles.boldLabel);
+            EditorGUILayout.Space();
+
+            gradient = EditorGUILayout.GradientField("Gradient", gradient);
+            
+            textureWidth = EditorGUILayout.IntSlider("Width", textureWidth, 32, 1024);
+            textureHeight = EditorGUILayout.IntSlider("Height", textureHeight, 1, 16);
+            
+            savePath = EditorGUILayout.TextField("Save Path", savePath);
+            
+            EditorGUILayout.Space();
+            
+            if (GUILayout.Button("Create Ramp Texture"))
+            {
+                CreateRampTexture();
+            }
+            
+            EditorGUILayout.Space();
+            EditorGUILayout.HelpBox("Create custom ramp textures for unique lighting styles. The gradient will be converted to a horizontal ramp texture.", MessageType.Info);
+        }
+
+        private void CreateRampTexture()
+        {
+            Texture2D rampTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGB24, false);
+            rampTexture.wrapMode = TextureWrapMode.Clamp;
+
+            for (int x = 0; x < textureWidth; x++)
+            {
+                float t = (float)x / (textureWidth - 1);
+                Color color = gradient.Evaluate(t);
+                
+                for (int y = 0; y < textureHeight; y++)
+                {
+                    rampTexture.SetPixel(x, y, color);
+                }
+            }
+
+            rampTexture.Apply();
+
+            string path = savePath + "RampTexture_" + System.DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".png";
+            byte[] pngData = rampTexture.EncodeToPNG();
+            System.IO.File.WriteAllBytes(path, pngData);
+            
+            AssetDatabase.Refresh();
+            
+            // Set import settings
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null)
+            {
+                importer.textureType = TextureImporterType.Default;
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
+            
+            Debug.Log("Ramp texture created at: " + path);
+            
+            // Select the created texture
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
     }
 }
