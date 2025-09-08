@@ -2,14 +2,8 @@
 #define TOON_FORWARD_PASS_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
-#include "ToonHelpers.hlsl"
-#include "ToonLighting.hlsl"
-#include "ToonSpecular.hlsl"
-#include "ToonRim.hlsl"
-#include "ToonShadows.hlsl"
-#include "ToonEffects.hlsl"
 
-// Texture declarations
+// Declare textures and samplers before including other files
 TEXTURE2D(_BaseMap);
 SAMPLER(sampler_BaseMap);
 TEXTURE2D(_RampMap);
@@ -21,7 +15,7 @@ SAMPLER(sampler_HatchingMap);
 TEXTURE2D(_EmissionMap);
 SAMPLER(sampler_EmissionMap);
 
-// Property declarations
+// Property declarations in CBUFFER for SRP Batcher compatibility
 CBUFFER_START(UnityPerMaterial)
     float4 _BaseMap_ST;
     half4 _BaseColor;
@@ -66,6 +60,14 @@ CBUFFER_START(UnityPerMaterial)
     half _ZWrite;
     half _ZTest;
 CBUFFER_END
+
+// Now include the helper files that use these variables
+#include "ToonHelpers.hlsl"
+#include "ToonLighting.hlsl"
+#include "ToonSpecular.hlsl"
+#include "ToonRim.hlsl"
+#include "ToonShadows.hlsl"
+#include "ToonEffects.hlsl"
 
 struct Attributes
 {
@@ -165,12 +167,15 @@ half4 ToonFragment(Varyings input) : SV_Target
     // World space vectors
     float3 positionWS = input.positionWS;
     half3 normalWS = NormalizeNormalPerPixel(input.normalWS);
-    half3 viewDirWS = normalize(input.viewDirWS);
+    half3 viewDirWS = SafeNormalize(input.viewDirWS);
     
     // Shadow coordinates
-    float4 shadowCoord = TransformWorldToShadowCoord(positionWS);
     #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-    shadowCoord = input.shadowCoord;
+    float4 shadowCoord = input.shadowCoord;
+    #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
+    float4 shadowCoord = TransformWorldToShadowCoord(positionWS);
+    #else
+    float4 shadowCoord = float4(0, 0, 0, 0);
     #endif
     
     // Get main light
@@ -213,8 +218,7 @@ half4 ToonFragment(Varyings input) : SV_Target
         #ifdef _ADDITIONAL_LIGHTS
             // Additional lights
             uint pixelLightCount = GetAdditionalLightsCount();
-            for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
-            {
+            LIGHT_LOOP_BEGIN(pixelLightCount)
                 Light light = GetAdditionalLight(lightIndex, positionWS);
                 ToonLightingData additionalLighting = CalculateToonLightingSimple(surfaceData, light, positionWS);
                 finalColor += additionalLighting.diffuse * 0.5; // Reduce intensity for additional lights
@@ -223,7 +227,7 @@ half4 ToonFragment(Varyings input) : SV_Target
                     half3 additionalSpecular = CalculateToonSpecular(surfaceData, light);
                     finalColor += additionalSpecular * 0.5;
                 #endif
-            }
+            LIGHT_LOOP_END
         #endif
         
         // Apply stylized shadows

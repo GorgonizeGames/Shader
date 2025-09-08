@@ -3,28 +3,36 @@
 
 #include "ToonHelpers.hlsl"
 
-// External properties and textures are declared in the main pass file
-// We'll access them directly here
+// Declare the external variables that will be defined in the main pass
+// These need to be properly declared for Unity 6 compatibility
+
+// Function declarations for external textures/samplers
+TEXTURE2D(_MatCapMap);
+SAMPLER(sampler_MatCapMap);
 
 // Calculate stylized specular highlights
 half3 CalculateToonSpecular(ToonSurfaceData surfaceData, Light light)
 {
     #ifdef _ENABLE_SPECULAR
-        half3 lightDir = normalize(light.direction);
-        half3 viewDir = normalize(surfaceData.viewDirectionWS);
-        half3 halfVector = normalize(lightDir + viewDir);
+        // Access properties from CBUFFER defined in main pass
+        // We assume these are available from UnityPerMaterial CBUFFER
+        
+        half3 lightDir = SafeNormalize(light.direction);
+        half3 viewDir = SafeNormalize(surfaceData.viewDirectionWS);
+        half3 halfVector = SafeNormalize(lightDir + viewDir);
         
         half NdotH = saturate(dot(surfaceData.normalWS, halfVector));
         half LdotH = saturate(dot(lightDir, halfVector));
         
         #ifdef _ANISOTROPIC_SPECULAR
             // Anisotropic specular for hair and fabric-like materials
-            half3 binormal = SafeNormalize(cross(surfaceData.normalWS, halfVector));
+            half3 tangent = half3(1, 0, 0); // Default tangent, should be passed from vertex
+            half3 binormal = SafeNormalize(cross(surfaceData.normalWS, tangent));
             half HdotB = dot(halfVector, binormal);
             
             // Anisotropic highlight calculation
-            half anisotropicHighlight = sqrt(1.0 - HdotB * HdotB);
-            anisotropicHighlight = pow(anisotropicHighlight, 1.0 / _SpecularSize);
+            half anisotropicHighlight = sqrt(max(0.001, 1.0 - HdotB * HdotB));
+            anisotropicHighlight = pow(anisotropicHighlight, max(0.001, 1.0 / _SpecularSize));
             
             // Apply anisotropy direction
             anisotropicHighlight *= (1.0 + _Anisotropy * HdotB);
@@ -32,14 +40,11 @@ half3 CalculateToonSpecular(ToonSurfaceData surfaceData, Light light)
             half specularTerm = anisotropicHighlight;
         #else
             // Standard specular calculation
-            half specularTerm = pow(NdotH, 1.0 / _SpecularSize);
+            half specularTerm = pow(NdotH, max(0.001, 1.0 / _SpecularSize));
         #endif
         
         // Apply toon-style quantization to specular
         half toonSpecular = smoothstep(1.0 - _SpecularSmoothness, 1.0, specularTerm);
-        
-        // Optional: Step-based specular for more stylized look
-        // toonSpecular = step(0.5, specularTerm);
         
         half3 specularColor = _SpecularColor.rgb * toonSpecular;
         specularColor *= light.color * light.distanceAttenuation;
@@ -61,7 +66,9 @@ half3 CalculateMatCapSpecular(ToonSurfaceData surfaceData)
 {
     #ifdef _USE_MATCAP
         // Transform normal to view space for MatCap sampling
-        half3 normalVS = TransformWorldToViewDir(surfaceData.normalWS);
+        float4x4 viewMatrix = UNITY_MATRIX_V;
+        half3 normalVS = mul((float3x3)viewMatrix, surfaceData.normalWS);
+        normalVS = SafeNormalize(normalVS);
         
         // Convert to UV coordinates for MatCap sampling
         half2 matCapUV = normalVS.xy * 0.5 + 0.5;
@@ -86,7 +93,7 @@ half3 CalculateStylizedBlinnPhong(ToonSurfaceData surfaceData, Light light, half
     half NdotL = saturate(dot(surfaceData.normalWS, lightDir));
     
     // Convert roughness to specular power
-    half specularPower = 2.0 / (roughness * roughness) - 2.0;
+    half specularPower = max(0.001, 2.0 / (roughness * roughness) - 2.0);
     half specularTerm = pow(NdotH, specularPower) * NdotL;
     
     // Apply toon-style quantization
@@ -122,11 +129,11 @@ half3 CalculateLayeredSpecular(ToonSurfaceData surfaceData, Light light, half la
     half NdotH = saturate(dot(surfaceData.normalWS, halfVector));
     
     // First specular layer (sharp highlight)
-    half specular1 = pow(NdotH, 1.0 / layer1Size);
+    half specular1 = pow(NdotH, max(0.001, 1.0 / layer1Size));
     specular1 = step(0.8, specular1); // Sharp cutoff
     
     // Second specular layer (broader highlight)
-    half specular2 = pow(NdotH, 1.0 / layer2Size);
+    half specular2 = pow(NdotH, max(0.001, 1.0 / layer2Size));
     specular2 = smoothstep(0.3, 0.7, specular2);
     
     half3 combinedSpecular = _SpecularColor.rgb * (specular1 + specular2 * 0.3);
@@ -144,7 +151,7 @@ half3 CalculateClothSpecular(ToonSurfaceData surfaceData, Light light, half fabr
     half NdotL = saturate(dot(surfaceData.normalWS, lightDir));
     
     // Velvet-like specular calculation
-    half velvetTerm = pow(1.0 - NdotV, fabricRoughness) * NdotL;
+    half velvetTerm = pow(max(0.001, 1.0 - NdotV), fabricRoughness) * NdotL;
     
     // Apply toon quantization
     velvetTerm = smoothstep(0.3, 0.7, velvetTerm);
@@ -163,7 +170,7 @@ half3 CalculateSkinSpecular(ToonSurfaceData surfaceData, Light light, half skinS
     half NdotL = saturate(dot(surfaceData.normalWS, lightDir));
     
     // Soft specular for skin
-    half skinSpecular = pow(NdotH, 1.0 / _SpecularSize) * NdotL;
+    half skinSpecular = pow(NdotH, max(0.001, 1.0 / _SpecularSize)) * NdotL;
     
     // Apply skin-appropriate smoothing
     skinSpecular = smoothstep(0.1, 0.9, skinSpecular * skinSmoothness);
@@ -185,11 +192,11 @@ half3 CalculateMetallicSpecular(ToonSurfaceData surfaceData, Light light, half m
     half NdotV = saturate(dot(surfaceData.normalWS, viewDir));
     
     // Sharp metallic highlight
-    half metallicSpecular = pow(NdotH, 1.0 / (_SpecularSize * 0.1)); // Much sharper
+    half metallicSpecular = pow(NdotH, max(0.001, 1.0 / (_SpecularSize * 0.1))); // Much sharper
     metallicSpecular = step(0.95, metallicSpecular); // Very sharp cutoff
     
     // Fresnel for metallic surfaces
-    half fresnel = pow(1.0 - NdotV, 5.0);
+    half fresnel = pow(max(0.001, 1.0 - NdotV), 5.0);
     
     // Tint specular with surface color for metals
     half3 metallicColor = lerp(_SpecularColor.rgb, surfaceData.albedo, metallic);

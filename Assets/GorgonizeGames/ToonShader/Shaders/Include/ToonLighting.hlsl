@@ -3,12 +3,16 @@
 
 #include "ToonHelpers.hlsl"
 
-// External properties and textures are declared in the main pass file
-// We'll access them directly here
-
-// Texture declarations (these will be declared in main pass)
-// TEXTURE2D(_RampMap);
-// SAMPLER(sampler_RampMap);
+// External properties - these will be defined in the main pass
+// But we need to declare externs here for Unity 6
+extern TEXTURE2D(_RampMap);
+extern SAMPLER(sampler_RampMap);
+extern half4 _ShadowColor;
+extern half4 _HighlightColor;
+extern half _ShadowIntensity;
+extern half _LightSmoothness;
+extern int _RampSteps;
+extern half _ShadowBlendMode;
 
 struct ToonSurfaceData
 {
@@ -74,12 +78,51 @@ half3 ApplyShadowBlending(half3 baseColor, half3 shadowColor, half shadowMask, i
     return result;
 }
 
-// Simple version of CalculateToonLighting that uses properties directly
+// Main CalculateToonLighting function - THIS WAS MISSING!
+ToonLightingData CalculateToonLighting(ToonSurfaceData surfaceData, Light light, float3 positionWS)
+{
+    ToonLightingData lightingData;
+    
+    half3 lightDir = SafeNormalize(light.direction);
+    half NdotL = dot(surfaceData.normalWS, lightDir);
+    half lightAttenuation = light.distanceAttenuation * light.shadowAttenuation;
+    
+    // Convert NdotL to 0-1 range for ramp sampling
+    half lightValue = NdotL * 0.5 + 0.5;
+    
+    // Apply toon shading based on settings
+    #ifdef _USE_RAMP_SHADING
+        // Use ramp texture
+        half3 rampColor = SampleRampTexture(lightValue);
+        half3 lightColor = rampColor;
+    #else
+        // Use procedural stepped gradient
+        half3 lightColor = ProceduralRampLighting(lightValue, _RampSteps, _ShadowColor, _HighlightColor);
+    #endif
+    
+    // Apply shadow blending
+    half shadowMask = 1.0 - saturate(NdotL);
+    shadowMask = smoothstep(0.5 - _LightSmoothness, 0.5 + _LightSmoothness, shadowMask);
+    
+    half3 finalColor = ApplyShadowBlending(surfaceData.albedo, _ShadowColor.rgb, shadowMask * _ShadowIntensity, (int)_ShadowBlendMode);
+    
+    // Combine with light color and attenuation
+    half3 diffuseColor = finalColor * lightColor * light.color * lightAttenuation;
+    
+    // Store results
+    lightingData.diffuse = diffuseColor;
+    lightingData.lightValue = lightValue;
+    lightingData.shadowAttenuation = light.shadowAttenuation;
+    
+    return lightingData;
+}
+
+// Simple version for additional lights
 ToonLightingData CalculateToonLightingSimple(ToonSurfaceData surfaceData, Light light, float3 positionWS)
 {
     ToonLightingData lightingData;
     
-    half3 lightDir = normalize(light.direction);
+    half3 lightDir = SafeNormalize(light.direction);
     half NdotL = dot(surfaceData.normalWS, lightDir);
     half lightAttenuation = light.distanceAttenuation * light.shadowAttenuation;
     
@@ -87,10 +130,10 @@ ToonLightingData CalculateToonLightingSimple(ToonSurfaceData surfaceData, Light 
     half lightValue = NdotL * 0.5 + 0.5;
     
     // Simple toon lighting
-    half smoothedLight = step(0.0, NdotL);
+    half smoothedLight = smoothstep(0.5 - _LightSmoothness, 0.5 + _LightSmoothness, lightValue);
     
     // Simple color mixing
-    half3 lightColor = lerp(half3(0.5, 0.5, 0.8), half3(1, 1, 1), smoothedLight);
+    half3 lightColor = lerp(_ShadowColor.rgb, _HighlightColor.rgb, smoothedLight);
     
     // Combine with light color and attenuation
     half3 diffuseColor = surfaceData.albedo * lightColor * light.color * lightAttenuation;
@@ -106,13 +149,12 @@ ToonLightingData CalculateToonLightingSimple(ToonSurfaceData surfaceData, Light 
 // Lambert lighting with toon quantization (for additional lights)
 half3 CalculateAdditionalToonLight(half3 albedo, Light light, half3 normalWS)
 {
-    half3 lightDir = normalize(light.direction);
+    half3 lightDir = SafeNormalize(light.direction);
     half NdotL = dot(normalWS, lightDir);
     half lightAttenuation = light.distanceAttenuation * light.shadowAttenuation;
     
     // Simple toon shading for additional lights
-    half toonValue = step(0.0, NdotL);
-    toonValue = lerp(0.2, 1.0, toonValue); // Maintain some ambient lighting
+    half toonValue = smoothstep(0.5 - _LightSmoothness, 0.5 + _LightSmoothness, NdotL * 0.5 + 0.5);
     
     return albedo * light.color * lightAttenuation * toonValue;
 }

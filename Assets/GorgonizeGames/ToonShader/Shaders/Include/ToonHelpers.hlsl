@@ -3,12 +3,11 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-// Safe normalize function that handles zero-length vectors (custom version)
-half3 SafeNormalizeCustom(half3 inVec)
-{
-    half dp3 = max(FLT_MIN, dot(inVec, inVec));
-    return inVec * rsqrt(dp3);
-}
+// Unity 6'da SafeNormalize doğrudan Core.hlsl'de tanımlı
+// Kendi versiyonumuzu kullanmaya gerek yok, sadece wrapper yapalım
+#ifndef SafeNormalize
+    #define SafeNormalize(inVec) SafeNormalize(inVec)
+#endif
 
 // Simple noise function for procedural effects
 half SimpleNoise(float2 uv)
@@ -32,6 +31,22 @@ half ImprovedNoise(float2 uv)
     float2 u = f * f * (3.0 - 2.0 * f);
     
     return lerp(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+
+// Generate dither pattern for shadow transitions
+half GenerateDitherPattern(float2 uv)
+{
+    // Bayer matrix 4x4 dithering
+    const float bayerMatrix[16] = {
+        0.0, 8.0, 2.0, 10.0,
+        12.0, 4.0, 14.0, 6.0,
+        3.0, 11.0, 1.0, 9.0,
+        15.0, 7.0, 13.0, 5.0
+    };
+    
+    int2 matrixPos = int2(fmod(uv, 4.0));
+    int index = matrixPos.y * 4 + matrixPos.x;
+    return bayerMatrix[index] / 16.0;
 }
 
 // Smoothstep with adjustable edge sharpness
@@ -219,7 +234,8 @@ half VoronoiNoise(float2 uv, half scale)
         for (int x = -1; x <= 1; x++)
         {
             float2 neighbor = float2(float(x), float(y));
-            float2 point = SimpleNoise(i + neighbor) + neighbor;
+            float2 pointOffset = float2(SimpleNoise(i + neighbor), SimpleNoise(i + neighbor + float2(17.0, 42.0)));
+            float2 point = neighbor + pointOffset;
             float2 diff = point - f;
             half dist = length(diff);
             minDist = min(minDist, dist);
@@ -267,7 +283,7 @@ half3 AdjustContrast(half3 color, half contrast)
 // Gamma correction
 half3 ApplyGamma(half3 color, half gamma)
 {
-    return pow(color, 1.0 / gamma);
+    return pow(abs(color), 1.0 / gamma);
 }
 
 // Dithering patterns - simplified version
@@ -306,7 +322,7 @@ half EaseOutQuad(half t) { return 1.0 - (1.0 - t) * (1.0 - t); }
 half EaseInOutQuad(half t) { return t < 0.5 ? 2.0 * t * t : 1.0 - 2.0 * (1.0 - t) * (1.0 - t); }
 
 half EaseInCubic(half t) { return t * t * t; }
-half EaseOutCubic(half t) { return 1.0 - (1.0 - t) * (1.0 - t) * (1.0 - t); }
+half EaseOutCubic(half t) { return 1.0 - pow(1.0 - t, 3.0); }
 
 // Utility for checking if a feature is enabled
 bool IsFeatureEnabled(half featureToggle)
